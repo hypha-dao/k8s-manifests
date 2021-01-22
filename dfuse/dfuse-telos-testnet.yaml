@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dfuse-blocks-telos-testnet
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-testnet
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: do-block-storage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dfuse-telos-testnet-mindreader
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-testnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-testnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-testnet
+    spec:
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vvv"]
+        ports:
+        - containerPort: 8888
+          name: nodeos-api
+          protocol: TCP
+        - containerPort: 8080
+          name: mindrdr-mgr
+          protocol: TCP
+
+        volumeMounts:
+        - name: dfuse-blocks-telos-testnet
+          mountPath: /data
+
+        - name: dfuse-mindreader-config-testnet
+          mountPath: /config/mindreader.yaml
+          subPath: mindreader.yaml
+
+        - name: dfuse-mindreader-config-ini-testnet
+          mountPath: /config/config.ini
+          subPath: config.ini
+
+        - name: dfuse-mindreader-genesis-json-testnet
+          mountPath: /config/genesis.json
+          subPath: genesis.json
+
+      volumes:
+      - name: dfuse-blocks-telos-testnet
+        persistentVolumeClaim:
+          claimName: dfuse-blocks-telos-testnet
+
+      - name: dfuse-mindreader-config-testnet
+        configMap:
+          name: telos-testnet-mindreader
+
+      - name: dfuse-mindreader-config-ini-testnet
+        configMap:
+          name: telos-testnet-config-ini
+
+      - name: dfuse-mindreader-genesis-json-testnet
+        configMap:
+          name: telos-testnet-genesis-json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dfuse-telos-testnet-mindreader
+  namespace: dfuse
+  labels:
+    app: dfuse
+    end: telos-testnet
+spec:
+  ports:
+  - port: 8888
+    targetPort: 8888
+    protocol: TCP
+    name: nodeos-api
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: mindrdr-mgr
+  selector:
+    app: dfuse
+    env: telos-testnet

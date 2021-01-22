@@ -1,0 +1,157 @@
+# This is the service that should be used by the clients of Dgraph to talk to the cluster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dgraph-test
+  labels:
+    app: dgraph
+    env: test
+spec:
+  type: NodePort
+  ports:
+  - port: 5080
+    targetPort: 5080
+    name: grpc-zero
+  - port: 6080
+    targetPort: 6080
+    name: http-zero
+  - port: 8080
+    targetPort: 8080
+    name: http-alpha
+  - port: 9080
+    targetPort: 9080
+    name: grpc-alpha
+  - port: 8000
+    targetPort: 8000
+    name: http-ratel
+  selector:
+    app: dgraph
+---
+# This StatefulSet runs 1 pod with one Zero, one Alpha & one Ratel containers.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dgraph
+  env: test
+spec:
+  serviceName: "dgraph-test"
+  replicas: 1
+  selector:
+      matchLabels:
+        app: dgraph
+        env: test
+  template:
+    metadata:
+      labels:
+        app: dgraph
+        env: test
+    spec:
+      containers:
+      - name: ratel
+        image: dgraph/dgraph:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: http-ratel
+        command:
+          - dgraph-ratel
+      - name: zero
+        image: dgraph/dgraph:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5080
+          name: grpc-zero
+        - containerPort: 6080
+          name: http-zero
+        volumeMounts:
+        - name: datadir
+          mountPath: /dgraph
+        command:
+          - bash
+          - "-c"
+          - |
+            set -ex
+            dgraph zero --my=$(hostname -f):5080
+      - name: alpha
+        image: dgraph/dgraph:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http-alpha
+        - containerPort: 9080
+          name: grpc-alpha
+        volumeMounts:
+        - name: datadir
+          mountPath: /dgraph
+        env:
+          - name: DGRAPH_WHITELIST
+            value: "$(DGRAPH_WHITELIST)"
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        command:
+          - bash
+          - "-c"
+          - |
+            set -ex
+            dgraph alpha --whitelist 161.35.123.184,161.35.115.23 --my=$(hostname -f):7080 --zero dgraph-0.dgraph.${POD_NAMESPACE}.svc.cluster.local:5080
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - name: datadir
+        persistentVolumeClaim:
+          claimName: datadir
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - metadata:
+      name: datadir
+      labels:
+        app: dgraph
+        env: test
+      annotations:
+        volume.alpha.kubernetes.io/storage-class: anything
+    spec:
+      accessModes:
+        - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: 2Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dgraph-ingress
+  labels:
+    app: dgraph
+    env: test
+  annotations:
+    kubernetes.io/ingress.class: "nginx"    
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - ratel-test.digscar.com
+    - alpha-test.digscar.com
+    secretName: digscar-com-tls
+  rules:
+  - host: ratel-test.digscar.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dgraph-test
+            port: 
+              number: 8000
+  - host: alpha-test.digscar.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dgraph-test
+            port: 
+              number: 8080

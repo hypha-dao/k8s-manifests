@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: telos-digscar-ingress
+  namespace: dfuse
+  annotations:
+    kubernetes.io/ingress.class: "nginx"    
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  tls:
+  - hosts:
+    - telos.digscar.com
+    secretName: telos-digscar-com-tls
+  rules:
+  - host: telos.digscar.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: telos
+            port: 
+              number: 8888

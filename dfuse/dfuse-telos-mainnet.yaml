@@ -1,0 +1,209 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dfuse-blocks-telos-mainnet
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: do-block-storage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dfuse-telos-mainnet-mindreader
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-mainnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-mainnet
+    spec:
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vvv"]
+        ports:
+        - containerPort: 8888
+          name: nodeos-api
+          protocol: TCP
+        - containerPort: 8080
+          name: mindrdr-mgr
+          protocol: TCP
+
+        volumeMounts:
+        - name: dfuse-blocks-telos-mainnet
+          mountPath: /data
+
+        - name: dfuse-mindreader-config
+          mountPath: /config/mindreader.yaml
+          subPath: mindreader.yaml
+
+        - name: dfuse-mindreader-config-ini
+          mountPath: /config/config.ini
+          subPath: config.ini
+
+        - name: dfuse-mindreader-genesis-json
+          mountPath: /config/genesis.json
+          subPath: genesis.json
+
+        # - name: telos-mainnet-disallow-empty-producer-schedule
+        #   mountPath: /config/protocol_features/BUILTIN-DISALLOW_EMPTY_PRODUCER_SCHEDULE.json
+        #   subPath: BUILTIN-DISALLOW_EMPTY_PRODUCER_SCHEDULE.json
+        
+        # - name: telos-mainnet-fix-linkauth-restriction
+        #   mountPath: /config/protocol_features/BUILTIN-FIX_LINKAUTH_RESTRICTION.json
+        #   subPath: BUILTIN-FIX_LINKAUTH_RESTRICTION.json
+
+        # - name: telos-mainnet-forward-setcode
+        #   mountPath: /config/protocol_features/BUILTIN-FORWARD_SETCODE.json
+        #   subPath: BUILTIN-FORWARD_SETCODE.json
+        
+        # - name: telos-mainnet-get-sender
+        #   mountPath: /config/protocol_features/BUILTIN-GET_SENDER.json
+        #   subPath: BUILTIN-GET_SENDER.json
+        
+        # - name: telos-mainnet-no-duplicate-deferred-id
+        #   mountPath: /config/protocol_features/BUILTIN-NO_DUPLICATE_DEFERRED_ID.json
+        #   subPath: BUILTIN-NO_DUPLICATE_DEFERRED_ID.json
+        
+        # - name: telos-mainnet-only-bill-first-authorizer
+        #   mountPath: /config/protocol_features/BUILTIN-ONLY_BILL_FIRST_AUTHORIZER.json
+        #   subPath: BUILTIN-ONLY_BILL_FIRST_AUTHORIZER.json
+        
+        # - name: telos-mainnet-only-link-to-existing-permission
+        #   mountPath: /config/protocol_features/BUILTIN-ONLY_LINK_TO_EXISTING_PERMISSION.json
+        #   subPath: BUILTIN-ONLY_LINK_TO_EXISTING_PERMISSION.json
+        
+        # - name: telos-mainnet-preactivate-feature
+        #   mountPath: /config/protocol_features/BUILTIN-PREACTIVATE_FEATURE.json
+        #   subPath: BUILTIN-PREACTIVATE_FEATURE.json
+        
+        # - name: telos-mainnet-ram-restrictions
+        #   mountPath: /config/protocol_features/BUILTIN-RAM_RESTRICTIONS.json
+        #   subPath: BUILTIN-RAM_RESTRICTIONS.json
+        
+        # - name: telos-mainnet-replace-deferred
+        #   mountPath: /config/protocol_features/BUILTIN-REPLACE_DEFERRED.json
+        #   subPath: BUILTIN-REPLACE_DEFERRED.json
+        
+        # - name: telos-mainnet-restrict-action-to-self
+        #   mountPath: /config/protocol_features/BUILTIN-RESTRICT_ACTION_TO_SELF.json
+        #   subPath: BUILTIN-RESTRICT_ACTION_TO_SELF.json
+
+        # - name: telos-mainnet-webauthn-key
+        #   mountPath: /config/protocol_features/BUILTIN-WEBAUTHN_KEY.json
+        #   subPath: BUILTIN-WEBAUTHN_KEY.json
+
+        # - name: telos-mainnet-wtmsig-block-signatures
+        #   mountPath: /config/protocol_features/BUILTIN-WTMSIG_BLOCK_SIGNATURES.json
+        #   subPath: BUILTIN-WTMSIG_BLOCK_SIGNATURES.json
+
+      volumes:
+      - name: dfuse-blocks-telos-mainnet
+        persistentVolumeClaim:
+          claimName: dfuse-blocks-telos-mainnet
+
+      - name: dfuse-mindreader-config
+        configMap:
+          name: telos-mainnet-mindreader
+
+      - name: dfuse-mindreader-config-ini
+        configMap:
+          name: telos-mainnet-config-ini
+
+      - name: dfuse-mindreader-genesis-json
+        configMap:
+          name: telos-mainnet-genesis-json
+
+      # - name: telos-mainnet-disallow-empty-producer-schedule
+      #   configMap: 
+      #     name: telos-mainnet-disallow-empty-producer-schedule
+
+      # - name: telos-mainnet-fix-linkauth-restriction
+      #   configMap: 
+      #     name: telos-mainnet-fix-linkauth-restriction
+
+      # - name: telos-mainnet-forward-setcode
+      #   configMap: 
+      #     name: telos-mainnet-forward-setcode
+
+      # - name: telos-mainnet-get-sender
+      #   configMap: 
+      #     name: telos-mainnet-get-sender
+
+      # - name: telos-mainnet-no-duplicate-deferred-id
+      #   configMap: 
+      #     name: telos-mainnet-no-duplicate-deferred-id
+
+      # - name: telos-mainnet-only-bill-first-authorizer
+      #   configMap: 
+      #     name: telos-mainnet-only-bill-first-authorizer
+
+      # - name: telos-mainnet-only-link-to-existing-permission
+      #   configMap: 
+      #     name: telos-mainnet-only-link-to-existing-permission
+
+      # - name: telos-mainnet-preactivate-feature
+      #   configMap: 
+      #     name: telos-mainnet-preactivate-feature
+
+      # - name: telos-mainnet-ram-restrictions
+      #   configMap: 
+      #     name: telos-mainnet-ram-restrictions
+
+      # - name: telos-mainnet-replace-deferred
+      #   configMap: 
+      #     name: telos-mainnet-replace-deferred
+
+      # - name: telos-mainnet-restrict-action-to-self
+      #   configMap: 
+      #     name: telos-mainnet-restrict-action-to-self
+
+      # - name: telos-mainnet-webauthn-key
+      #   configMap: 
+      #     name: telos-mainnet-webauthn-key
+
+      # - name: telos-mainnet-wtmsig-block-signatures
+      #   configMap: 
+      #     name: telos-mainnet-wtmsig-block-signatures
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dfuse-telos-mainnet-mindreader
+  namespace: dfuse
+  labels:
+    app: dfuse
+    end: telos-mainnet
+spec:
+  ports:
+  - port: 8888
+    targetPort: 8888
+    protocol: TCP
+    name: nodeos-api
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: mindrdr-mgr
+  selector:
+    app: dfuse
+    env: telos-mainnet

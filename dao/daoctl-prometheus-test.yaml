@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: daoctl-prometheus-test
+  labels:
+    app: daoctl-prometheus
+    env: test
+spec:
+  type: NodePort
+  selector:
+    app: daoctl-prometheus
+    env: test
+  ports:
+    - name: hypha-prom
+      protocol: TCP
+      port: 8085
+      targetPort: 8085
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daoctl-prometheus-test
+  labels:
+    app: daoctl-prometheus
+    env: test
+spec:
+  selector:
+    matchLabels:
+      app: daoctl-prometheus
+      env: test
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: daoctl-prometheus
+        env: test
+    spec:
+      containers:
+        - name: daoctl-prometheus
+          image: dsmaxds/daoctl:v0.3.11
+          ports:
+            - containerPort: 8085
+          env:
+          - name: DAOCTL_EOSIOENDPOINT
+            value: "https://testnet.telos.caleos.io"

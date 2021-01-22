@@ -1,0 +1,287 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-disallow-empty-producer-schedule
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-DISALLOW_EMPTY_PRODUCER_SCHEDULE.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "2853617cec3eabd41881eb48882e6fc5e81a0db917d375057864b3befbe29acd",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "DISALLOW_EMPTY_PRODUCER_SCHEDULE"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-fix-linkauth-restriction
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-FIX_LINKAUTH_RESTRICTION.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "a98241c83511dc86c857221b9372b4aa7cea3aaebc567a48604e1d3db3557050",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "FIX_LINKAUTH_RESTRICTION"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-forward-setcode
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-FORWARD_SETCODE.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "898082c59f921d0042e581f00a59d5ceb8be6f1d9c7a45b6f07c0e26eaee0222",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "FORWARD_SETCODE"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-get-sender
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-GET_SENDER.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "1eab748b95a2e6f4d7cb42065bdee5566af8efddf01a55a0a8d831b823f8828a",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "GET_SENDER"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-no-duplicate-deferred-id
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-NO_DUPLICATE_DEFERRED_ID.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [
+        "ef43112c6543b88db2283a2e077278c315ae2c84719a8b25f25cc88565fbea99"
+      ],
+      "description_digest": "45967387ee92da70171efd9fefd1ca8061b5efe6f124d269cd2468b47f1575a0",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "NO_DUPLICATE_DEFERRED_ID"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-only-bill-first-authorizer
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-ONLY_BILL_FIRST_AUTHORIZER.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "2f1f13e291c79da5a2bbad259ed7c1f2d34f697ea460b14b565ac33b063b73e2",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "ONLY_BILL_FIRST_AUTHORIZER"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-only-link-to-existing-permission
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-ONLY_LINK_TO_EXISTING_PERMISSION.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "f3c3d91c4603cde2397268bfed4e662465293aab10cd9416db0d442b8cec2949",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "ONLY_LINK_TO_EXISTING_PERMISSION"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-preactivate-feature
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-PREACTIVATE_FEATURE.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "64fe7df32e9b86be2b296b3f81dfd527f84e82b98e363bc97e40bc7a83733310",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "2019-09-26T17:00",
+        "preactivation_required": false,
+        "enabled": true
+      },
+      "builtin_feature_codename": "PREACTIVATE_FEATURE"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-ram-restrictions
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-RAM_RESTRICTIONS.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "1812fdb5096fd854a4958eb9d53b43219d114de0e858ce00255bd46569ad2c68",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "RAM_RESTRICTIONS"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-replace-deferred
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-REPLACE_DEFERRED.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "9908b3f8413c8474ab2a6be149d3f4f6d0421d37886033f27d4759c47a26d944",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "REPLACE_DEFERRED"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-restrict-action-to-self
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-RESTRICT_ACTION_TO_SELF.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "e71b6712188391994c78d8c722c1d42c477cf091e5601b5cf1befd05721a57f3",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "RESTRICT_ACTION_TO_SELF"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-webauthn-key
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-WEBAUTHN_KEY.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "927fdf78c51e77a899f2db938249fb1f8bb38f4e43d9c1f75b190492080cbc34",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "WEBAUTHN_KEY"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-wtmsig-block-signatures
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  BUILTIN-WTMSIG_BLOCK_SIGNATURES.json: |
+    {
+      "protocol_feature_type": "builtin",
+      "dependencies": [],
+      "description_digest": "ab76031cad7a457f4fd5f5fca97a3f03b8a635278e0416f77dcc91eb99a48e10",
+      "subjective_restrictions": {
+        "earliest_allowed_activation_time": "1970-01-01T00:00:00.000",
+        "preactivation_required": true,
+        "enabled": true
+      },
+      "builtin_feature_codename": "WTMSIG_BLOCK_SIGNATURES"
+    }
