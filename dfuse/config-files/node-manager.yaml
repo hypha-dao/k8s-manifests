@@ -1,0 +1,8 @@
+
+start:
+  args:
+  - node-manager
+  flags:
+    log-to-file: true
+    node-manager-config-dir: /config
+    node-manager-data-dir: /data

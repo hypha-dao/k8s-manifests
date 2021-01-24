@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-mainnet-node-manager-nfs
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-mainnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-mainnet
+    spec:
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/node-manager.yaml", "--data-dir", "/data", "-vvv"]
+        ports:
+        - containerPort: 8888
+          name: nodeos-api
+          protocol: TCP
+        - containerPort: 8080
+          name: node-mgr
+          protocol: TCP
+
+        volumeMounts:
+        - name: telos-mainnet-node-manager-nfs
+          mountPath: /data
+
+        - name: dfuse-node-manager-config
+          mountPath: /config/node-manager.yaml
+          subPath: node-manager.yaml
+
+        - name: dfuse-node-manager-config-ini
+          mountPath: /config/config.ini
+          subPath: config.ini
+
+        - name: dfuse-node-manager-genesis-json
+          mountPath: /config/genesis.json
+          subPath: genesis.json
+
+      volumes:
+      - name: telos-mainnet-node-manager-nfs
+        persistentVolumeClaim:
+          claimName: telos-mainnet-node-manager-nfs
+
+      - name: dfuse-node-manager-config
+        configMap:
+          name: telos-mainnet-node-manager
+
+      - name: dfuse-node-manager-config-ini
+        configMap:
+          name: telos-mainnet-node-manager-config-ini
+
+      - name: dfuse-node-manager-genesis-json
+        configMap:
+          name: telos-mainnet-genesis-json

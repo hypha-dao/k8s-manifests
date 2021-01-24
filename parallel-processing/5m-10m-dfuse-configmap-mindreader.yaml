@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-mindreader-5m-10m
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  mindreader.yaml: |
+    start:
+      args:
+      - mindreader
+      flags:
+        log-to-file: true
+        common-blocks-store-url: /data/mindreader/blocks/merged
+        common-oneblock-store-url: /data/mindreader/blocks/one
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        mindreader-manager-api-addr: :8080
+        mindreader-nodeos-api-addr: localhost:8888
+        mindreader-config-dir: /config
+        mindreader-readiness-max-latency: 5s
+        mindreader-snapshot-store-url: ./snapshots
+        mindreader-blocks-chan-capacity: 100000
+        mindreader-start-failure-handler: false
+        mindreader-log-to-zap: true
+        mindreader-shutdown-delay: 20s
+
+        mindreader-bootstrap-snapshot-name: /data/storage/snapshots/0005003080-004c5748ff70890642809dc9332c3750439969dcaf46b6a8fab6eb06d0459d97-snapshot.bin
+        mindreader-start-block-num: 5000000
+        mindreader-stop-block-num: 10000000
+---
+        
+

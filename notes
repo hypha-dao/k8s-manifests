@@ -1,0 +1,73 @@
+4 PM
+
+nfs 
+
+root@pool-jix5wow7n-300pp:/mnt/pvc_bcc1ab62_48e0_47b1_b7dc_ddeb9a202996/pvc-ed87f450-f15e-461b-963f-ae4da457d997# du
+276     ./blocks/reversible
+397944  ./blocks
+439132  ./state
+4       ./storage/merged-blocks
+4       ./storage/snapshots
+12      ./storage
+4       ./snapshots
+847216  .
+
+
+4 PM non-nfs
+
+root@telos-mainnet-node-manager-588b598d87-6rgth:/data# du
+4       ./storage/merged-blocks
+4       ./storage/snapshots
+12      ./storage
+16      ./lost+found
+4       ./snapshots
+438572  ./state
+276     ./blocks/reversible
+323216  ./blocks
+766232  .
+
+
+
+mainnet mindreader 
+
+560256  ./state
+6364    ./blocks/reversible
+11284348        ./blocks
+16      ./lost+found
+4       ./storage/merged-blocks
+267676  ./storage/snapshots
+267684  ./storage
+1488628 ./mindreader/blocks/merged
+4       ./mindreader/blocks/one
+1488636 ./mindreader/blocks
+440224  ./mindreader/data/state
+276     ./mindreader/data/blocks/reversible
+469524  ./mindreader/data/blocks
+4       ./mindreader/data/snapshots
+909756  ./mindreader/data
+236     ./mindreader/work
+2398632 ./mindreader
+127004  ./snapshots
+14779896        .
+
+
+
+
+
+
+
+
+
+
+
+
+Sat 4:30 PM - block 1.7 m 
+
+tail-mainnet-node-manager (non-nfs)
+
+
+telos-mainnet-node-manager-nfs
+
+
+
+telos-mainnet-mindreader : 2 million

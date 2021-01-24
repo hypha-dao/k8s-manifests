@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: processed-dfuse-blocks-telos-mainnet
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: do-block-storage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-mainnet-mindreader-1m-5m
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-mainnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-mainnet
+    spec:
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data-write", "-vvv"]
+        ports:
+        - containerPort: 8888
+          name: nodeos-api
+          protocol: TCP
+        - containerPort: 8080
+          name: mindrdr-mgr
+          protocol: TCP
+
+        volumeMounts:
+        - name: processed-dfuse-blocks-telos-mainnet
+          mountPath: /data-write
+
+        - name: telos-mainnet-node-manager
+          mountPath: /data-read
+          readOnly: true
+
+        - name: dfuse-mindreader-config
+          mountPath: /config/mindreader.yaml
+          subPath: mindreader.yaml
+
+        - name: dfuse-mindreader-config-ini
+          mountPath: /config/config.ini
+          subPath: config.ini
+
+      volumes:
+      - name: dfuse-blocks-telos-mainnet
+        persistentVolumeClaim:
+          claimName: dfuse-blocks-telos-mainnet
+
+      - name: processed-dfuse-blocks-telos-mainnet
+        persistentVolumeClaim:
+          claimName: processed-dfuse-blocks-telos-mainnet
+
+      - name: dfuse-mindreader-config
+        configMap:
+          name: telos-mainnet-mindreader
+
+      - name: dfuse-mindreader-config-ini
+        configMap:
+          name: telos-mainnet-mindreader-config-ini

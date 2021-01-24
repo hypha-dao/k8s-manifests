@@ -81,7 +81,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: eosio-telos-mainnet-mindreader
+  name: eosio-telos-mainnet
   namespace: dfuse
   labels:
     app: eosio

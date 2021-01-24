@@ -20,7 +20,7 @@ data:
     read-mode = head
     p2p-accept-transactions = false
     api-accept-transactions = false
-    agent-name = telos-kitchen-dfuse-mindreader
+    agent-name = telos-kitchen
     p2p-server-address = 127.0.0.1:9876
     p2p-listen-endpoint = 127.0.0.1:9876
     p2p-max-nodes-per-host = 2
@@ -32,7 +32,6 @@ data:
     wasm-runtime = eos-vm-jit
     eos-vm-oc-enable = true
     eos-vm-oc-compile-threads = 4
-    deep-mind = true
     contracts-console = true
     p2p-peer-address = p2p.eos.miami:13975
     p2p-peer-address = p2p.telos-21zephyr.com:9876

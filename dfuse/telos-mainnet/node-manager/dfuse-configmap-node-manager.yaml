@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-node-manager
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  node-manager.yaml: |
+    start:
+      args:
+      - node-manager
+      flags:
+        log-to-file: true
+        common-blocks-store-url: /data/mindreader/blocks/merged
+        common-oneblock-store-url: /data/mindreader/blocks/one
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        node-manager-http-listen-addr: :8080
+        node-manager-config-dir: /config
+        node-manager-data-dir: /data
+        node-manager-auto-snapshot-modulo: 5000000
+        node-manager-auto-snapshot-period: 6h
+

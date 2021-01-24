@@ -26,6 +26,3 @@ data:
         mindreader-log-to-zap: true
         mindreader-shutdown-delay: 20s
         mindreader-start-block-num: 1
----
-        
-

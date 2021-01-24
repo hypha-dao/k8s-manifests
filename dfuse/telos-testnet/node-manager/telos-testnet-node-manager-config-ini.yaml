@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-testnet-node-manager-config-ini
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-testnet
+data:
+  config.ini: |
+    plugin = eosio::chain_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::http_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+    plugin = eosio::producer_plugin
+    plugin = eosio::producer_api_plugin
+    max-transaction-time = 5000
+    read-mode = head
+    p2p-accept-transactions = false
+    api-accept-transactions = false
+    agent-name = telos-kitchen
+    p2p-server-address = 127.0.0.1:9876
+    p2p-listen-endpoint = 127.0.0.1:9876
+    p2p-max-nodes-per-host = 2
+    connection-cleanup-period = 60
+    access-control-allow-origin = *
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+    wasm-runtime = eos-vm-jit
+    eos-vm-oc-enable = true
+    eos-vm-oc-compile-threads = 4
+    deep-mind = false
+    contracts-console = true
+    p2p-peer-address = testnet.telosusa.io:19877
+    p2p-peer-address = node1.testnet2.telosglobal.io:9876
+    p2p-peer-address = node2.testnet2.telosglobal.io:9876
+    p2p-peer-address = basho-p2p.telosuk.io:19876
+    p2p-peer-address = peer.tlostest.alohaeos.com:9876
+    p2p-peer-address = nickfury.tlos.goodblock.io:9876
+    p2p-peer-address = 207.148.6.75:9877
+    p2p-peer-address = api.basho.eostribe.io:9880
+    p2p-peer-address = telos-test.greymass.com:19871
+    p2p-peer-address = testnet.telos.caleos.io:9880
