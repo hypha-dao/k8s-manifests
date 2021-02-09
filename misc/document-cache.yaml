@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-cache
+  labels: 
+    app: document-cache
+    env: test
+spec:
+  selector:
+    matchLabels:
+      app: document-cache
+      env: test
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: document-cache
+        env: test
+    spec:
+      containers:
+        - name: document-cache-instrumentation
+          image: sebastianmontero/document-cache-instrumentation:latest
+          command: ["node"]
+          args: ["src/start.js"]
+          env:
+          - name: DGRAPH_ALPHA_HOST
+            value: "161.35.123.184"
+          - name: DGRAPH_ALPHA_EXTERNAL_PORT
+            value: "31968"
+          - name: DGRAPH_ALPHA_HTTP_PORT
+            value: "32665"
+          - name: DATA_PATH
+            value: "."
+          - name: STORE_NAME
+            value: "document-cache.json"                  
+          - name: START_FROM
+            value: "2021-01-08T00:00:00.000Z"
+          - name: CONTRACT_NAME
+            value: "dao.hypha"
+          - name: DOC_TABLE_NAME
+            value: "documents"
+          - name: EDGE_TABLE_NAME
+            value: "edges"
+          - name: EOS_ENDPOINT
+            value: "https://testnet.telos.caleos.io"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-cache-prom-service
+  labels:
+    app: document-cache
+spec:
+  type: NodePort
+  selector:
+    app: document-cache
+  ports:
+  - name: prom
+    port: 9090
+    targetPort: 9090
+    protocol: TCP

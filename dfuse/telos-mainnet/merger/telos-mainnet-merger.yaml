@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-merger
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  merger.yaml: |
+    start:
+      args:
+      - merger
+      flags:
+        log-to-file: true
+        common-blocks-store-url: gs://telos-mainnet/merged
+        common-oneblock-store-url: gs://telos-mainnet/one
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-mainnet-merger
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-mainnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-mainnet
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/merger.yaml","-v"]
+        volumeMounts:
+        - name: telos-mainnet-merger
+          mountPath: /config/merger.yaml
+          subPath: merger.yaml
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+      - name: telos-mainnet-merger
+        configMap:
+          name: telos-mainnet-merger
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420

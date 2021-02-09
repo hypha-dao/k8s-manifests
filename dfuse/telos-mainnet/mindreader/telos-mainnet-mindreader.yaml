@@ -11,8 +11,8 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
-  storageClassName: do-block-storage
+      storage: 25Gi
+  storageClassName: standard
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,12 +35,14 @@ spec:
         app: dfuse
         env: telos-mainnet
     spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
         image: dfuse/dfuse-eosio
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vvv"]
+        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-v"]
         ports:
         - containerPort: 8888
           name: nodeos-api
@@ -65,8 +67,12 @@ spec:
           mountPath: /config/genesis.json
           subPath: genesis.json
 
-      nodeSelector:
-        env: telos-mainnet
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+
+      # nodeSelector:
+      #   env: telos-mainnet
 
       volumes:
       - name: dfuse-blocks-telos-mainnet
@@ -84,6 +90,11 @@ spec:
       - name: dfuse-mindreader-genesis-json
         configMap:
           name: telos-mainnet-genesis-json
+
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420
 ---
 apiVersion: v1
 kind: Service

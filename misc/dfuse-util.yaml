@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dfuse-util
+  namespace: dfuse
+  labels:
+    app: dfuse
+spec:
+  containers:
+  - name: dfuse-eosio
+    image: dfuse/dfuse-eosio:latest
+    imagePullPolicy: IfNotPresent
+    command:
+      - "sleep"
+      - "6048000"
+  restartPolicy: Always
+  

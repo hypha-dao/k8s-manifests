@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-fluxdb-config
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  statedb.yaml: |
+    start:
+      args:
+      - statedb
+      flags:
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        statedb-store-dsn: tikv://basic-pd.default:2379/statedb?prefix=namespace_prefix
+        common-blocks-store-url: gs://telos-mainnet/merged
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-mainnet-fluxdb
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-mainnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-mainnet
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/statedb.yaml", "--data-dir", "/data", "-v"]
+  
+        volumeMounts:
+        - name: telos-mainnet-fluxdb-config
+          mountPath: /config/statedb.yaml
+          subPath: statedb.yaml
+
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+
+      volumes:
+      - name: telos-mainnet-fluxdb-config
+        configMap:
+          name: telos-mainnet-fluxdb-config
+
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420

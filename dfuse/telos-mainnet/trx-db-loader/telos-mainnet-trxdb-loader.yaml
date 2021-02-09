@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-trxdb-loader-config-30-60
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  trxdb-loader.yaml: |
+    start:
+      args:
+      - trxdb-loader
+      flags:
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        trxdb-loader-processing-type: batch
+        trxdb-loader-start-block-num: 30000001
+        trxdb-loader-stop-block-num: 60000000
+        common-trxdb-dsn: tikv://basic-pd.dfuse:2379/trxdb?prefix=namespace_prefix
+        common-blocks-store-url: gs://telos-mainnet/merged
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-mainnet-trxdb-loader-30-60
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-mainnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-mainnet
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/trxdb-loader.yaml", "--data-dir", "/data", "-v"]
+  
+        volumeMounts:
+        - name: telos-mainnet-trxdb-loader-config-30-60
+          mountPath: /config/trxdb-loader.yaml
+          subPath: trxdb-loader.yaml
+
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+
+      volumes:
+      - name: telos-mainnet-trxdb-loader-config-30-60
+        configMap:
+          name: telos-mainnet-trxdb-loader-config-30-60
+
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420

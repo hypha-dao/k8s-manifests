@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daoctl
+  namespace: monitoring
+  labels:
+    app: daoctl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: daoctl
+  template:
+    metadata:
+      labels:
+        app: daoctl
+    spec:
+      containers:
+      - name: daoctl
+        image: dsmaxds/daoctl:latest
+        ports:
+        - containerPort: 8085
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: daoctl
+  namespace: monitoring
+spec:
+  ports:
+    - name: hypha-prom
+      port: 8085
+      targetPort: 8085
+  selector:
+    app: daoctl
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: daoctl
+  namespace: monitoring
+  labels:
+    app: daoctl
+    prometheus: daoctl
+spec:
+  namespaceSelector:
+    any: false
+  selector:
+    matchLabels:
+      monitor: daoctl
+  endpoints:
+  - port: hypha-prom
+    path: /
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  namespace: monitoring
+  name: daoctl
+  labels:
+    app: daoctl
+spec:
+  serviceAccountName: tekit-prometheus-kube-prom-operator
+  alerting:
+    alertmanagers:
+    - namespace: default
+      name: alertmanager-daoctl
+      port: web
+  serviceMonitorSelector:
+    matchLabels:
+      app: daoctl
+  resources:
+    requests:
+      memory: 400Mi
+  ruleSelector:
+    matchLabels:
+      app: daoctl
+      prometheus: daoctl
+      role: alert-rules
+  enableAdminAPI: false

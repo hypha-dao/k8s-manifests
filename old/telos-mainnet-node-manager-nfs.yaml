@@ -24,7 +24,7 @@ spec:
         image: dfuse/dfuse-eosio
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/node-manager.yaml", "--data-dir", "/data", "-vvv"]
+        args: ["start", "-c", "/config/node-manager.yaml", "--data-dir", "/data", "-v"]
         ports:
         - containerPort: 8888
           name: nodeos-api

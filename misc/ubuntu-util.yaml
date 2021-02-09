@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cloud-sdk
+  namespace: dfuse
+spec:
+  volumes:
+    - name: dfuse-service-account-token-jsp6h
+      secret:
+        secretName: dfuse-service-account-token-jsp6h
+        defaultMode: 420
+  containers:
+  - name: cloud-sdk
+    image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+    command:
+      - "sleep"
+      - "1204800"
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+  restartPolicy: Always    
+  serviceAccountName: dfuse-service-account
+  serviceAccount: dfuse-service-account

@@ -1,0 +1,141 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: telos-${NETWORK}-mindreader-pvc-${CURSOR}
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-${NETWORK}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-${NETWORK}-mindreader-${CURSOR}
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-${NETWORK}
+data:
+  mindreader.yaml: |
+    start:
+      args:
+      - mindreader
+      flags:
+        log-to-file: true
+        common-blocks-store-url: gs://telos-${NETWORK}/merged
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        mindreader-manager-api-addr: :8080
+        mindreader-nodeos-api-addr: localhost:8888
+        mindreader-config-dir: /config
+        mindreader-readiness-max-latency: 5s
+        mindreader-blocks-chan-capacity: 100000
+        mindreader-start-failure-handler: false
+        mindreader-log-to-zap: true
+        mindreader-shutdown-delay: 20s
+        mindreader-snapshot-store-url: gs://telos-${NETWORK}/snapshots
+        mindreader-restore-snapshot-name: ${SNAPSHOT_NAME}
+        mindreader-start-block-num: ${START_BLOCK}
+        mindreader-stop-block-num: ${STOP_BLOCK}
+        mindreader-batch-mode: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-${NETWORK}-mindreader-${CURSOR}
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-${NETWORK}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-${NETWORK}
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-${NETWORK}
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vv"]
+        ports:
+        - containerPort: 8888
+          name: nodeos-api
+          protocol: TCP
+        - containerPort: 8080
+          name: mindrdr-mgr
+          protocol: TCP
+
+        volumeMounts:
+
+        - name: telos-${NETWORK}-mindreader-pvc-${CURSOR}
+          mountPath: /data
+
+        - name: telos-${NETWORK}-mindreader-${CURSOR}
+          mountPath: /config/mindreader.yaml
+          subPath: mindreader.yaml
+
+        - name: telos-${NETWORK}-mindreader-config-ini
+          mountPath: /config/config.ini
+          subPath: config.ini
+
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+
+      volumes:
+      - name: telos-${NETWORK}-mindreader-pvc-${CURSOR}
+        persistentVolumeClaim:
+          claimName: telos-${NETWORK}-mindreader-pvc-${CURSOR}
+
+      - name: telos-${NETWORK}-mindreader-${CURSOR}
+        configMap:
+          name: telos-${NETWORK}-mindreader-${CURSOR}
+
+      - name: telos-${NETWORK}-mindreader-config-ini
+        configMap:
+          name: telos-${NETWORK}-mindreader-config-ini
+
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mindreader-telos-${NETWORK}-svc-${CURSOR}
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-${NETWORK}
+spec:
+  type: NodePort
+  ports:
+  - port: 8888
+    targetPort: 8888
+    protocol: TCP
+    name: nodeos-api
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: mindrdr-mgr
+  selector:
+    app: dfuse
+    env: telos-${NETWORK}

@@ -1,0 +1,236 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-other
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  dfuse-config.yaml: |
+    start:
+      args:
+      - eosws
+      - dgraphql
+      # - blockmeta
+      # - apiproxy
+      - abicodec
+      # - eosq
+      - dashboard
+      - node-manager
+      flags:
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        common-trxdb-dsn: tikv://basic-pd.dfuse:2379/trxdb?prefix=namespace_prefix
+        common-blocks-store-url: gs://telos-mainnet/merged
+        statedb-store-dsn: tikv://basic-pd.default:2379/statedb?prefix=namespace_prefix
+        eosq-http-listen-addr: :13030
+        node-manager-http-listen-addr: :8999
+        node-manager-config-dir: /config
+        node-manager-snapshot-store-url: gs://telos-mainnet/snapshots
+        node-manager-restore-snapshot-name: 0093249004-058eddec2c519b1934ea58beb53a5dfeabe21cb04b7d241f339ab0ee80fbcde3-snapshot.bin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-mainnet-other
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-mainnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-mainnet
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/dfuse-config.yaml", "-v"]
+        ports:
+        - containerPort: 8081
+          name: dash
+          protocol: TCP
+
+        - containerPort: 8080
+          name: api-mgr
+          protocol: TCP
+
+        - containerPort: 8888
+          protocol: TCP
+          name: nodeos-api
+
+        - containerPort: 8999
+          protocol: TCP
+          name: node-mgr
+        
+        - containerPort: 13031
+          protocol: TCP
+          name: dash-grpc
+
+        - containerPort: 13008
+          protocol: TCP
+          name: dash-nmgr
+
+        - containerPort: 13011
+          protocol: TCP
+          name: not-sure
+
+        - containerPort: 9102
+          protocol: TCP
+          name: prom
+        
+        - containerPort: 13013
+          protocol: TCP
+          name: abi
+
+        - containerPort: 13018
+          protocol: TCP
+          name: abi-search
+        
+        - containerPort: 13023
+          protocol: TCP
+          name: dgql
+        
+        - containerPort: 13024
+          protocol: TCP
+          name: dgql-grpc
+        
+        - containerPort: 13026
+          protocol: TCP
+          name: eosws        
+
+        - containerPort: 13014
+          protocol: TCP
+          name: blockmeta
+
+        - containerPort: 13030
+          protocol: TCP
+          name: eosq
+                       
+        volumeMounts:
+        - name: telos-mainnet-other
+          mountPath: /config/dfuse-config.yaml
+          subPath: dfuse-config.yaml
+
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+
+        - name: telos-mainnet-node-manager-config-ini
+          mountPath: /config/config.ini
+          subPath: config.ini
+
+      volumes:
+      - name: telos-mainnet-other
+        configMap:
+          name: telos-mainnet-other
+      
+      - name: telos-mainnet-node-manager-config-ini
+        configMap:
+          name: telos-mainnet-node-manager-config-ini
+
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dfuse-mainnet-other
+  namespace: dfuse
+  labels:
+    app: dfuse
+    end: telos-mainnet
+spec:
+  ports:
+  - port: 8888
+    targetPort: 8888
+    protocol: TCP
+    name: nodeos-api
+
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: mindrdr-mgr
+
+  - port: 8081
+    targetPort: 8081
+    name: dash
+    protocol: TCP
+
+  - port: 8999
+    targetPort: 8999
+    name: node-mgr
+    protocol: TCP
+
+  - targetPort: 13031
+    port: 13031
+    protocol: TCP
+    name: dash-grpc
+
+  - targetPort: 13008
+    port: 13008
+    protocol: TCP
+    name: dash-nmgr
+
+  - targetPort: 13011
+    port: 13011
+    protocol: TCP
+    name: not-sure
+
+  - targetPort: 9102
+    port: 9102
+    protocol: TCP
+    name: prom
+  
+  - targetPort: 13013
+    port: 13013
+    protocol: TCP
+    name: abi
+
+  - targetPort: 13018
+    port: 13018
+    protocol: TCP
+    name: abi-search
+  
+  - targetPort: 13023
+    port: 13023
+    protocol: TCP
+    name: dgql
+  
+  - targetPort: 13024
+    port: 13024
+    protocol: TCP
+    name: dgql-grpc
+  
+  - targetPort: 13026
+    port: 13026
+    protocol: TCP
+    name: eosws        
+
+  - targetPort: 13014
+    port: 13014
+    protocol: TCP
+    name: blockmeta
+
+  - targetPort: 13030
+    port: 13030
+    protocol: TCP
+    name: eosq
+
+  selector:
+    app: dfuse
+    env: telos-mainnet
