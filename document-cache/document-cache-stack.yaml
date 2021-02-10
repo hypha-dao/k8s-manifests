@@ -154,7 +154,7 @@ spec:
           args: ["src/start.js"]
           env:
           - name: DGRAPH_ALPHA_HOST
-            value: dgraph-test
+            value: "10.120.3.49"
           - name: DGRAPH_ALPHA_EXTERNAL_PORT
             value: "9080"
           - name: DGRAPH_ALPHA_HTTP_PORT
