@@ -148,17 +148,19 @@ spec:
         app: document-cache-test
     spec:
       containers:
-        - name: document-cache-instrumentation
-          image: sebastianmontero/document-cache-instrumentation:latest
+        - name: hypha-doc-cache-testnet
+          image: sebastianmontero/hypha-doc-cache-testnet:latest
           command: ["node"]
           args: ["src/start.js"]
           env:
           - name: DGRAPH_ALPHA_HOST
-            value: "10.120.3.49"
+            value: dgraph-test
           - name: DGRAPH_ALPHA_EXTERNAL_PORT
-            value: "8080"
-          - name: DGRAPH_ALPHA_HTTP_PORT
             value: "9080"
+          - name: DGRAPH_ALPHA_HTTP_PORT
+            value: "8080"
+          - name: PROMETHEUS_PORT
+            value: "9090"          
           - name: DATA_PATH
             value: "."
           - name: STORE_NAME
@@ -173,6 +175,8 @@ spec:
             value: "edges"
           - name: EOS_ENDPOINT
             value: "https://testnet.telos.caleos.io"
+          - name: BLOCK_END_TIMEOUT
+            value: "500"
 ---
 apiVersion: v1
 kind: Service
