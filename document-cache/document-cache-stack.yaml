@@ -89,7 +89,7 @@ spec:
           - "-c"
           - |
             set -ex
-            dgraph alpha --my=$(hostname -f):7080 --zero dgraph-0.dgraph.${POD_NAMESPACE}.svc.cluster.local:5080
+            dgraph alpha --my=$(hostname -f):7080 --zero dgraph-test.dgraph.${POD_NAMESPACE}.svc.cluster.local:5080
       terminationGracePeriodSeconds: 60
       volumes:
       - name: datadir
@@ -154,7 +154,7 @@ spec:
           args: ["src/start.js"]
           env:
           - name: DGRAPH_ALPHA_HOST
-            value: "10.120.3.49"
+            value: dgraph-test.document-cache.svc
           - name: DGRAPH_ALPHA_EXTERNAL_PORT
             value: "9080"
           - name: DGRAPH_ALPHA_HTTP_PORT
