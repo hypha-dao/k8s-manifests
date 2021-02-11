@@ -25,12 +25,13 @@ data:
       - relayer
       - statedb
       flags:
-        common-include-filter-expr: (account == 'dao.hypha' || receiver == 'dao.hypha' || (account == 'eosio.token' && (data.to == 'dao.hypha' || data.from == 'dao.hypha')))
-        common-trxdb-dsn: tikv://basic-pd.default:2379/trxdb?prefix=namespace_prefix
+        common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || account == 'kv.hypha' || account == 'voice.hypha' || account == 'husd.hypha' || account == 'token.seeds' || account == 'escrow.seeds' || receiver == 'escrow.seeds'
+        # matches(account, 'hypha') || matches(receiver, 'hypha') || matches(auth:account, 'hypha') || matches(account, 'seeds') || matches(receiver, 'seeds') || matches(auth:account, 'seeds') || account == 'eosio.msig' || receiver == 'hyphanewyork' || auth:account == 'hyphanewyork'
+        common-trxdb-dsn: tikv://basic-pd.default:2379/trxdb
         common-blocks-store-url: gs://telos-mainnet/merged
         eosq-available-networks: '[{ "id": "hypha", "is_test": false, "logo": "https://dho.hypha.earth/app-logo-128x128.png", "name": "Hypha", "url": "https://eosq.tekit.io" }]'
         eosq-default-network: hypha
-        statedb-store-dsn: tikv://basic-pd.default:2379/statedb?prefix=namespace_prefix
+        statedb-store-dsn: tikv://basic-pd.default:2379/statedb
 ---
 apiVersion: apps/v1
 kind: StatefulSet
