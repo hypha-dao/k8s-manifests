@@ -12,10 +12,8 @@ data:
       args:
       - firehose
       flags:
-        log-to-file: false
+        common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || account == 'kv.hypha' || account == 'voice.hypha' || account == 'husd.hypha' || account == 'token.seeds' || account == 'escrow.seeds' || receiver == 'escrow.seeds'
         common-blocks-store-url: gs://telos-testnet/merged
-        common-blockstream-addr: ""
-        common-blockmeta-addr: ""
         firehose-grpc-listen-addr: ":9000"
 ---
 apiVersion: apps/v1
@@ -46,7 +44,7 @@ spec:
         image: dfuse/dfuse-eosio:latest
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/firehose.yaml","-d","run/firehose","-vvv"]
+        args: ["start", "-c", "/config/firehose.yaml","-v"]
         ports:
         - containerPort: 9000
           name: grpc
