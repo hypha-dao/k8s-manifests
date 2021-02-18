@@ -16,7 +16,7 @@ data:
         common-blocks-store-url: gs://telos-testnet/merged
         common-blockstream-addr: ""
         common-blockmeta-addr: ""
-        firehose-grpc-listen-addr: ":9000"
+        firehose-grpc-listen-addr: ":9000*"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,10 +43,10 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:latest
+        image: dfuse/dfuse-eosio:fecbcd4
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/firehose.yaml","-d","run/firehose","-vvv"]
+        args: ["start", "-c", "/config/firehose.yaml","-d","run/firehose","-vv"]
         ports:
         - containerPort: 9000
           name: grpc
@@ -78,7 +78,7 @@ metadata:
     app: dfuse
     end: telos-testnet
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: grpc
     port: 9000
