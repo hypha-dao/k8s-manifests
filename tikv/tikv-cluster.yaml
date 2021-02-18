@@ -2,7 +2,6 @@ apiVersion: tikv.org/v1alpha1
 kind: TikvCluster
 metadata:
   name: basic
-  namespace: dfuse
 spec:
   version: v4.0.10
   configUpdateStrategy: RollingUpdate
@@ -13,7 +12,7 @@ spec:
     baseImage: pingcap/pd
     replicas: 3
     requests:
-      storage: "10Gi"
+      storage: "50Gi"
     config:
       log:
         level: info
@@ -34,11 +33,11 @@ spec:
     requests:
       storage: "250Gi"
     annotations:
-      # tidb.pingcap.com/sysctl-init: "true"
-    # podSecurityContext:
-    #   sysctls:
-    #   - name: net.core.somaxconn
-    #     value: "32768"
+      tidb.pingcap.com/sysctl-init: "true"
+    podSecurityContext:
+      sysctls:
+      - name: net.core.somaxconn
+        value: "32768"
     config: {}
     nodeSelector:
       dedicated: tikv

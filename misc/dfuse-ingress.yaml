@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: eosq-ingress
+  namespace: dfuse
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/issue-temporary-certificate: "true"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+spec:
+  tls:
+  - hosts:
+    - eosq.tekit.io
+    secretName: eosq-tekit-tls
+  rules:
+  - host: eosq.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: dfuse-mainnet-other
+          servicePort: 13030
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: gql-ingress
+  namespace: dfuse
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/issue-temporary-certificate: "true"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+spec:
+  tls:
+  - hosts:
+    - gql.tekit.io
+    secretName: gql-tekit-tls
+  rules:
+  - host: gql.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: dfuse-mainnet-other
+          servicePort: 8080
