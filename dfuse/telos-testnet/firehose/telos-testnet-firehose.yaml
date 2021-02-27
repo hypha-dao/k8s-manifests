@@ -12,9 +12,12 @@ data:
       args:
       - firehose
       flags:
-        common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || account == 'kv.hypha' || account == 'voice.hypha' || account == 'husd.hypha' || account == 'token.seeds' || account == 'escrow.seeds' || receiver == 'escrow.seeds'
+        log-to-file: false
+	common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || account == 'kv.hypha' || account == 'voice.hypha' || account == 'husd.hypha' || account == 'token.seeds' || account == 'escrow.seeds' || receiver == 'escrow.seeds'
         common-blocks-store-url: gs://telos-testnet/merged
-        firehose-grpc-listen-addr: ":9000"
+        common-blockstream-addr: ""
+        common-blockmeta-addr: ""
+        firehose-grpc-listen-addr: ":9000*"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,10 +44,10 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:latest
+        image: dfuse/dfuse-eosio:fecbcd4
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/firehose.yaml","-v"]
+        args: ["start", "-c", "/config/firehose.yaml","-d","run/firehose","-vv"]
         ports:
         - containerPort: 9000
           name: grpc
@@ -76,7 +79,7 @@ metadata:
     app: dfuse
     end: telos-testnet
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: grpc
     port: 9000
