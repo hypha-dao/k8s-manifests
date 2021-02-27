@@ -22,7 +22,7 @@ data:
     agent-name = telos-kitchen-dfuse-mindreader
     p2p-server-address = 127.0.0.1:9876
     p2p-listen-endpoint = 127.0.0.1:9876
-    p2p-max-nodes-per-host = 2
+    p2p-max-nodes-per-host = 100
     connection-cleanup-period = 60
     access-control-allow-origin = *
     http-max-response-time-ms = 1000

@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: x-tekit-ingress
+  namespace: dfuse
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - x.tekit.io
+    secretName: x-tekit-tls
+  rules:
+  - host: x.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: telos-mainnet-node-manager
+          servicePort: 8888
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: p2p-tekit-ingress
+  namespace: dfuse
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: p2p.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: telos-mainnet-node-manager
+          servicePort: 9876

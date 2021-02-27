@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: p2p-tekit-ingress
+  namespace: dfuse
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: p2p.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: telos-mainnet-node-manager
+          servicePort: 9876

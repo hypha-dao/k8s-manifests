@@ -1,20 +1,20 @@
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: grafana-ingress
-  namespace: monitoring
+  name: test-tekit-ingress
+  namespace: dfuse
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
   - hosts:
-    - grafana.tekit.io
-    secretName: grafana-tekit-tls
+    - test.tekit.io
+    secretName: test-tekit-tls
   rules:
-  - host: grafana.tekit.io
+  - host: test.tekit.io
     http:
       paths:
       - backend:
-          serviceName: monitoring-grafana
-          servicePort: 80
+          serviceName: telos-testnet-node-manager
+          servicePort: 8888

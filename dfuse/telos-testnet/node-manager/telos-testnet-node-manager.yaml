@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-testnet-node-manager-config-ini
+  name: telos-testnet-config-ini
   namespace: dfuse
   labels:
     app: dfuse
@@ -17,31 +17,49 @@ data:
     plugin = eosio::producer_api_plugin
     max-transaction-time = 5000
     read-mode = head
-    p2p-accept-transactions = false
-    api-accept-transactions = false
+    p2p-accept-transactions = true
+    api-accept-transactions = true
     agent-name = telos-kitchen
     p2p-server-address = 127.0.0.1:9876
     p2p-listen-endpoint = 127.0.0.1:9876
-    p2p-max-nodes-per-host = 2
+    http-server-address = 0.0.0.0:8888
+    p2p-max-nodes-per-host = 100
     connection-cleanup-period = 60
-    access-control-allow-origin = *
     http-max-response-time-ms = 1000
     http-validate-host = false
     verbose-http-errors = true
     wasm-runtime = eos-vm-jit
     eos-vm-oc-enable = true
     eos-vm-oc-compile-threads = 4
-    deep-mind = false
+    deep-mind = true
     contracts-console = true
+    access-control-allow-origin = *
+    access-control-allow-headers = *
+    #chain-state-db-size-mb = 65536
+    reversible-blocks-db-size-mb = 4096
+    p2p-peer-address = test.telos.kitchen:9876
     p2p-peer-address = testnet.telosusa.io:19877
-    p2p-peer-address = node1.testnet2.telosglobal.io:9876
-    p2p-peer-address = node2.testnet2.telosglobal.io:9876
     p2p-peer-address = basho-p2p.telosuk.io:19876
     p2p-peer-address = peer.tlostest.alohaeos.com:9876
     p2p-peer-address = nickfury.tlos.goodblock.io:9876
     p2p-peer-address = api.basho.eostribe.io:9880
-    p2p-peer-address = telos-test.greymass.com:19871
     p2p-peer-address = testnet.telos.caleos.io:9880
+    p2p-peer-address=testnet2.telos.eosusa.news:59877
+    p2p-peer-address=basho.eos.barcelona:9899
+    p2p-peer-address=testnet.telos.eclipse24.io:6789
+    p2p-peer-address=testnet2.telos.eosdetroit.io:1337
+    p2p-peer-address=telos-testnet.atticlab.net:7876
+    p2p-peer-address=testnet.eossweden.eu:8022
+    p2p-peer-address=telosapi.eosmetal.io:59877
+    p2p-peer-address=testnet2p2p.telosarabia.net:9876
+    p2p-peer-address=157.230.29.117:9876
+    p2p-peer-address=prod.testnet.bp.teleology.world:9876
+    p2p-peer-address=testnet-b.telos-21zephyr.com:9876
+    p2p-peer-address=p2p.testnet.telosunlimited.io:9876
+    p2p-peer-address=basho.sofos.network:9876
+    p2p-peer-address=telos-testnet.cryptolions.io:9871
+    p2p-peer-address=api.basho.eostribe.io:9880
+    p2p-peer-address=p2p-telos-testnet.hkeos.com:59876
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -58,18 +76,20 @@ data:
       - node-manager
       flags:
         log-to-file: true
+        common-blocks-store-url: gs://telos-testnet/merged
+        common-oneblock-store-url: gs://telos-testnet/one
         common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
         node-manager-http-listen-addr: :8080
         node-manager-config-dir: /config
         node-manager-data-dir: /data
-        node-manager-auto-snapshot-modulo: 10000000
+        node-manager-auto-snapshot-modulo: 5000000
         node-manager-snapshot-store-url: gs://telos-testnet/snapshots
-        node-manager-restore-snapshot-name: 0092179388-057e8bbc651307a12f42d94f82fac0dc4a94e8f3b4ceb1d3298686631269a071-snapshot.bin
+        #node-manager-restore-snapshot-name: 0093995954-059a43b23d6161e2ce66d602fa1d6850699e5c449db128d7cdb455e7f71224e2-snapshot.bin
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: telos-testnet-node-manager-pvc
+  name: telos-testnet-node-manager-data
   namespace: dfuse
   labels:
     app: dfuse
@@ -92,7 +112,7 @@ metadata:
     env: telos-testnet
 spec:
   replicas: 1
-  serviceName: node-manager-telos-testnet-svc 
+  serviceName: telos-testnet-node-manager
   selector:
     matchLabels:
       app: dfuse
@@ -108,10 +128,9 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio
-        imagePullPolicy: IfNotPresent
+        image: dfuse/dfuse-eosio:latest
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/node-manager.yaml", "--data-dir", "/data", "-v"]
+        args: ["start", "-c", "/config/node-manager.yaml", "--data-dir", "/data", "-vv"]
         ports:
         - containerPort: 8888
           name: nodeos-api
@@ -119,16 +138,19 @@ spec:
         - containerPort: 8080
           name: node-mgr
           protocol: TCP
+        - containerPort: 9876
+          name: p2p
+          protocol: TCP
 
         volumeMounts:
-        - name: telos-testnet-node-manager-pvc
+        - name: telos-testnet-node-manager-data
           mountPath: /data
 
         - name: telos-testnet-node-manager-config
           mountPath: /config/node-manager.yaml
           subPath: node-manager.yaml
 
-        - name: dfuse-node-manager-config-ini
+        - name: telos-testnet-config-ini
           mountPath: /config/config.ini
           subPath: config.ini
 
@@ -137,17 +159,17 @@ spec:
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
 
       volumes:
-      - name: telos-testnet-node-manager-pvc
+      - name: telos-testnet-node-manager-data
         persistentVolumeClaim:
-          claimName: telos-testnet-node-manager-pvc
+          claimName: telos-testnet-node-manager-data
     
       - name: telos-testnet-node-manager-config
         configMap:
           name: telos-testnet-node-manager-config
 
-      - name: dfuse-node-manager-config-ini
+      - name: telos-testnet-config-ini
         configMap:
-          name: telos-testnet-node-manager-config-ini
+          name: telos-testnet-config-ini
 
       - name: dfuse-service-account-token-jsp6h
         secret:
@@ -157,7 +179,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: node-manager-telos-testnet-svc
+  name: telos-testnet-node-manager
   namespace: dfuse
   labels:
     app: dfuse
@@ -172,6 +194,26 @@ spec:
     targetPort: 8080
     protocol: TCP
     name: mindrdr-mgr
+  - port: 9876
+    targetPort: 9876
+    protocol: TCP
+    name: p2p
   selector:
     app: dfuse
     env: telos-testnet
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: telos-testnet-node-manager-p2p
+#   namespace: dfuse
+#   labels:
+#     app: dfuse
+#     end: telos-testnet
+# spec:
+#   type: NodePort
+#   ports:
+
+#   selector:
+#     app: dfuse
+#     env: telos-testnet

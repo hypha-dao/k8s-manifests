@@ -51,27 +51,26 @@ metadata:
   name: telos-${NETWORK}-mindreader-${CURSOR}
   namespace: dfuse
   labels:
-    app: dfuse
-    env: telos-${NETWORK}
+    app: dfuse-catchup
+    env: telos-${NETWORK}-catchup
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dfuse
-      env: telos-${NETWORK}
+      app: dfuse-catchup
+      env: telos-${NETWORK}-catchup
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse
-        env: telos-${NETWORK}
+        app: dfuse-catchup
+        env: telos-${NETWORK}-catchup
     spec:
       serviceAccountName: dfuse-service-account
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
         image: dfuse/dfuse-eosio
-        imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vv"]
         ports:
@@ -123,10 +122,9 @@ metadata:
   name: mindreader-telos-${NETWORK}-svc-${CURSOR}
   namespace: dfuse
   labels:
-    app: dfuse
-    env: telos-${NETWORK}
+    app: dfuse-catchup
+    env: telos-${NETWORK}-catchup
 spec:
-  type: NodePort
   ports:
   - port: 8888
     targetPort: 8888
@@ -137,5 +135,5 @@ spec:
     protocol: TCP
     name: mindrdr-mgr
   selector:
-    app: dfuse
-    env: telos-${NETWORK}
+    app: dfuse-catchup
+    env: telos-${NETWORK}-catchup

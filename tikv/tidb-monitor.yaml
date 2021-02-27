@@ -2,7 +2,6 @@ apiVersion: pingcap.com/v1alpha1
 kind: TidbMonitor
 metadata:
   name: basic
-  namespace: dfuse
 spec:
   alertmanagerURL: ""
   annotations: {}

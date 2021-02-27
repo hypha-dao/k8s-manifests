@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: polkadot-kusama
+  namespace: dfuse
+  labels:
+    app: polkadot-kusama
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: polkadot-kusama
+  namespace: dfuse
+  labels: 
+    app: polkadot-kusama
+spec:
+  serviceName: polkadot-kusama
+  selector:
+    matchLabels:
+      app: polkadot-kusama
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: polkadot-kusama
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: polkadot
+        image: parity/polkadot:latest
+        command:
+        - "sleep"
+        - "1204800"
+        # args: ["--chain", "kusama", "--name", "tekit", "--rpc-external", "--rpc-methods", "Unsafe", "--ws-external", "--prometheus-port", "9090", "--pruning", "archive"]
+        volumeMounts:
+        - name: polkadot-kusama
+          mountPath: /polkadot
+
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+
+      volumes:
+      - name: polkadot-kusama
+        persistentVolumeClaim:
+          claimName: polkadot-kusama
+
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: polkadot-kusama
+  namespace: dfuse
+spec:
+  ports:
+    - name: thirty
+      port: 30333
+      targetPort: 30333
+    - name: nine
+      port: 9933
+      targetPort: 9933
+    - name: prom
+      port: 9090
+      targetPort: 9090
+  selector:
+    app: polkadot-kusama
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: polkadot-kusama
+  namespace: dfuse
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - kusama.tekit.io
+    secretName: kusama-tekit-tls
+  rules:
+  - host: kusama.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: polkadot-kusama
+          servicePort: 9933

@@ -1,0 +1,176 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bitcoin-core
+  namespace: btc
+  labels:
+    app: bitcoin-core
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bitcoin-core
+  namespace: btc
+  labels:
+    app: bitcoin-core
+spec:
+  serviceName: bitcoin-core
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bitcoin-core
+  template:
+    metadata:
+      namespace: btc
+      labels:
+        app: bitcoin-core
+    spec:
+      containers:
+      - name: bitcoin-core
+        image: hub.docker.com/rumarinho/bitcoin-core:0.21-alpine
+        imagePullPolicy: IfNotPresent
+        args: ["-disablewallet", "-daemon"]
+        env:
+        - name: BITCOIN_DATA
+          value: /data       
+        ports:
+        - containerPort: 8332
+          name: rpc
+          protocol: TCP
+        - containerPort: 8333
+          name: p2p
+          protocol: TCP
+        volumeMounts:
+        - name: bitcoin-core
+          mountPath: /data
+      volumes:
+      - name: bitcoin-core
+        persistentVolumeClaim:
+          claimName: bitcoin-core
+# ---
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: btc-payserver
+#   namespace: btc
+#   labels:
+#     app: btc-payserver
+# spec:
+#   serviceName: btc-payserver
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: btc-payserver
+#   template:
+#     metadata:
+#       namespace: btc
+#       labels:
+#         app: btc-payserver
+#     spec:
+#       containers:
+#       - name: btcpayserver
+#         image: btcpayserver/btcpayserver:1.0.6.7
+#         imagePullPolicy: IfNotPresent
+#         # command:
+#         # - "sleep"
+#         # - "1204800"
+#         # command: ["btcpay-setup.sh"]
+#         # args: ["-i"]
+#         env:
+#         - name: BTCPAY_HOST
+#           value: btc.tekit.io
+#         - name: NBITCOIN_NETWORK
+#           value: mainnet
+#         - name: BTCPAYGEN_CRYPTO1
+#           value: btc
+#         - name: BTCPAYGEN_LIGHTNING
+#           value: lnd
+#         - name: BTCPAY_ENABLE_SSH
+#           value: "true"
+#         - name: LIGHTNING_ALIAS
+#           value: tekit
+#         - name: BTCPAYGEN_ADDITIONAL_FRAGMENTS
+#           value: "opt-lnd-autopilot;opt-save-storage"
+#         ports:
+#         - containerPort: 80
+#           name: http
+#           protocol: TCP
+#         - containerPort: 9735
+#           name: lightning
+#           protocol: TCP
+#         volumeMounts:
+#         - name: btc-payserver
+#           mountPath: /data
+#       volumes:
+#       - name: btc-payserver
+#         persistentVolumeClaim:
+#           claimName: btc-payserver
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bitcoin-core
+  namespace: btc
+  labels:
+    app: bitcoin-core
+spec:
+  ports:
+  - port: 8332
+    targetPort: 8332
+    protocol: TCP
+    name: rpc
+  - port: 8333
+    targetPort: 8333
+    protocol: TCP
+    name: p2p
+  selector:
+    app: bitcoin-core
+---
+# apiVersion: networking.k8s.io/v1beta1
+# kind: Ingress
+# metadata:
+#   name: btc-payserver
+#   namespace: btc
+#   annotations:
+#     kubernetes.io/ingress.class: "nginx"    
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   tls:
+#   - hosts:
+#     - btc.tekit.io
+#     secretName: btc-tekit-io-tls
+#   rules:
+#   - host: btc.tekit.io
+#     http:
+#       paths:
+#       - backend:
+#           serviceName: btc-payserver
+#           servicePort: 80
+# ---
+# apiVersion: networking.k8s.io/v1beta1
+# kind: Ingress
+# metadata:
+#   name: lnd-payserver
+#   namespace: btc
+#   annotations:
+#     kubernetes.io/ingress.class: "nginx"    
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   tls:
+#   - hosts:
+#     - lnd.tekit.io
+#     secretName: lnd-tekit-io-tls
+#   rules:
+#   - host: lnd.tekit.io
+#     http:
+#       paths:
+#       - backend:
+#           serviceName: btc-payserver
+#           servicePort: 9735

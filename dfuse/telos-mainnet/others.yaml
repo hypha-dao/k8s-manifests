@@ -26,8 +26,6 @@ data:
         eosq-http-listen-addr: :13030
         node-manager-http-listen-addr: :8999
         node-manager-config-dir: /config
-        node-manager-snapshot-store-url: gs://telos-mainnet/snapshots
-        node-manager-restore-snapshot-name: 0093249004-058eddec2c519b1934ea58beb53a5dfeabe21cb04b7d241f339ab0ee80fbcde3-snapshot.bin
 ---
 apiVersion: apps/v1
 kind: Deployment

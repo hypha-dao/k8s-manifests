@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hancock-web
+  namespace: hancock
+  labels:
+    app: hancock-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hancock-web
+  template:
+    metadata:
+      labels:
+        app: hancock-web
+    spec:
+      containers:
+      - name: hancock-web
+        image: registry.tekit.io/hancock-web:latest
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+      - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hancock-web
+  namespace: hancock
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  selector:
+    app: hancock-web
+---
+# apiVersion: networking.k8s.io/v1beta1
+# kind: Ingress
+# metadata:
+#   name: hancock-web-ingress
+#   namespace: hancock
+#   annotations:
+#     kubernetes.io/ingress.class: nginx
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+# spec:
+#   tls:
+#   - hosts:
+#     - hancock.app
+#     secretName: hancock-app-tls
+#   rules:
+#   - host: hancock.app
+#     http:
+#       paths:
+#       - backend:
+#           serviceName: hancock-web
+#           servicePort: 80
