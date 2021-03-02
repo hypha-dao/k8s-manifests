@@ -67,7 +67,7 @@ data:
         node-manager-data-dir: /data
         node-manager-auto-snapshot-modulo: 5000000
         node-manager-snapshot-store-url: gs://telos-mainnet/snapshots
-        #node-manager-restore-snapshot-name: 0138751888-08452f90c96a1eaf62063bb6553900b88203fcf3cd630b980c014247b22d2747-snapshot.bin
+        node-manager-restore-snapshot-name: 0138751888-08452f90c96a1eaf62063bb6553900b88203fcf3cd630b980c014247b22d2747-snapshot.bin
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

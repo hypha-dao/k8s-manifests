@@ -1,59 +1,82 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-mainnet-other
+  name: telos-mainnet-primary-config
   namespace: dfuse
   labels:
     app: dfuse
-    env: telos-mainnet
+    env: telos-mainnet-primary
 data:
   dfuse-config.yaml: |
     start:
       args:
       - eosws
       - dgraphql
+      - mindreader
       - blockmeta
       - apiproxy
       - abicodec
-      - eosq
+      #- eosq
       - dashboard
       - trxdb-loader
       - search-archive
       - search-indexer
-      - search-live
+      #- search-live
       - search-router
       - relayer
       - statedb
       flags:
         common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || account == 'kv.hypha' || account == 'voice.hypha' || account == 'husd.hypha' || account == 'token.seeds' || account == 'escrow.seeds' || receiver == 'escrow.seeds'
-        # matches(account, 'hypha') || matches(receiver, 'hypha') || matches(auth:account, 'hypha') || matches(account, 'seeds') || matches(receiver, 'seeds') || matches(auth:account, 'seeds') || account == 'eosio.msig' || receiver == 'hyphanewyork' || auth:account == 'hyphanewyork'
         common-trxdb-dsn: tikv://basic-pd.default:2379/trxdb
         common-blocks-store-url: gs://telos-mainnet/merged
+        common-oneblock-store-url: gs://telos-mainnet/one 
         eosq-available-networks: '[{ "id": "hypha", "is_test": false, "logo": "https://dho.hypha.earth/app-logo-128x128.png", "name": "Hypha", "url": "https://eosq.tekit.io" }]'
         eosq-default-network: hypha
         statedb-store-dsn: tikv://basic-pd.default:2379/statedb
+        node-manager-http-listen-addr: :8080
+        node-manager-config-dir: /config
+        node-manager-data-dir: /data
+        node-manager-auto-snapshot-modulo: 5000000
+        node-manager-snapshot-store-url: gs://telos-mainnet/snapshots
+        node-manager-restore-snapshot-name: 0139384734-084ed79ef566945fce6ffe1be7d03b9d175ae316f69723b55d0e6a8910a23c4b-snapshot.bin
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: telos-mainnet-primary-data
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet-primary
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 150Gi
+  storageClassName: standard
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: telos-mainnet-other
+  name: telos-mainnet-primary
   namespace: dfuse
   labels:
     app: dfuse
-    env: telos-mainnet
+    env: telos-mainnet-primary
 spec:
-  serviceName: dfuse-mainnet-other
+  serviceName: dfuse-mainnet-primary
   replicas: 1
   selector:
     matchLabels:
       app: dfuse
-      env: telos-mainnet
+      env: telos-mainnet-primary
   template:
     metadata:
       namespace: dfuse
       labels:
         app: dfuse
-        env: telos-mainnet
+        env: telos-mainnet-primary
     spec:
       serviceAccountName: dfuse-service-account
       serviceAccount: dfuse/dfuse-service-account
@@ -128,7 +151,7 @@ spec:
           name: eosq
                        
         volumeMounts:
-        - name: telos-mainnet-other
+        - name: telos-mainnet-primary-config
           mountPath: /config/dfuse-config.yaml
           subPath: dfuse-config.yaml
 
@@ -136,18 +159,26 @@ spec:
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
 
-        # - name: telos-mainnet-node-manager-config-ini
-        #   mountPath: /config/config.ini
-        #   subPath: config.ini
+        - name: telos-mainnet-config-ini
+          mountPath: /config/config.ini
+          subPath: config.ini
+
+        - name: telos-mainnet-primary-data
+          mountPath: /data
 
       volumes:
-      - name: telos-mainnet-other
+
+      - name: telos-mainnet-primary-data
+        persistentVolumeClaim:
+          claimName: telos-mainnet-primary-data
+
+      - name: telos-mainnet-primary-config
         configMap:
-          name: telos-mainnet-other
+          name: telos-mainnet-primary-config
       
-      # - name: telos-mainnet-node-manager-config-ini
-      #   configMap:
-      #     name: telos-mainnet-node-manager-config-ini
+      - name: telos-mainnet-config-ini
+        configMap:
+          name: telos-mainnet-config-ini
 
       - name: dfuse-service-account-token-jsp6h
         secret:
@@ -157,12 +188,16 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dfuse-mainnet-other
+  name: dfuse-mainnet-primary
   namespace: dfuse
   labels:
     app: dfuse
-    env: telos-mainnet
+    env: telos-mainnet-primary
 spec:
+  selector:
+    app: dfuse
+    env: telos-mainnet-primary
+
   ports:
   - port: 8888
     targetPort: 8888
@@ -243,8 +278,4 @@ spec:
     port: 13030
     protocol: TCP
     name: eosq
-
-  selector:
-    app: dfuse
-    env: telos-mainnet
 ---
