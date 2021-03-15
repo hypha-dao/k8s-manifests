@@ -1,7 +1,82 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-mindreader-config-ini
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  config.ini: |
+    plugin = eosio::chain_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::http_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+    plugin = eosio::producer_plugin
+    plugin = eosio::producer_api_plugin
+    chain-state-db-size-mb = 65536
+    max-transaction-time = 5000
+    read-mode = head
+    p2p-accept-transactions = true
+    api-accept-transactions = true
+    agent-name = telos-kitchen
+    p2p-server-address = 127.0.0.1:9876
+    p2p-listen-endpoint = 127.0.0.1:9876
+    http-server-address = 0.0.0.0:8888
+    p2p-max-nodes-per-host = 100
+    connection-cleanup-period = 60
+    access-control-allow-origin = *
+    access-control-allow-headers = *
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+    wasm-runtime = eos-vm-jit    
+    eos-vm-oc-enable = true
+    eos-vm-oc-compile-threads = 4
+    deep-mind = true
+    contracts-console = true
+    reversible-blocks-db-size-mb = 4096
+    p2p-peer-address = api.telos.kitchen:9876
+    p2p-peer-address = peer.telos.alohaeos.com:9876
+    p2p-peer-address = mainnet.telosusa.io:9877
+    p2p-peer-address = p2p.telos.eosdetroit.io:1337
+    p2p-peer-address = p2p.telos.cryptosuvi.io:2222
+    p2p-peer-address = api.telos.eostribe.io:7876
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-mindreader-config
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  mindreader.yaml: |
+    start:
+      args:
+      - mindreader
+      flags:
+        log-to-file: true
+        common-blocks-store-url: gs://telos-mainnet/merged
+        common-oneblock-store-url: gs://telos-mainnet/one
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        mindreader-manager-api-addr: :8080
+        mindreader-nodeos-api-addr: localhost:8888
+        mindreader-config-dir: /config
+        mindreader-readiness-max-latency: 5s
+        mindreader-blocks-chan-capacity: 100000
+        mindreader-start-failure-handler: false
+        mindreader-log-to-zap: true
+        mindreader-shutdown-delay: 20s
+        #mindreader-snapshot-store-url: gs://telos-mainnet/snapshots
+        #mindreader-restore-snapshot-name: 0139054041-0849cbd9bc7871b6e55f3bbbe46bd72c92bbb88ca4a9f240096422ca9b72742d-snapshot.bin
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: dfuse-blocks-telos-mainnet
+  name: telos-mainnet-mindreader-data
   namespace: dfuse
   labels:
     app: dfuse
@@ -11,19 +86,20 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 25Gi
+      storage: 50Gi
   storageClassName: standard
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: dfuse-telos-mainnet-mindreader
+  name: telos-mainnet-mindreader-statefulset
   namespace: dfuse
   labels:
     app: dfuse
     env: telos-mainnet
 spec:
   replicas: 1
+  serviceName: telos-mainnet-mindreader-service
   selector:
     matchLabels:
       app: dfuse
@@ -39,10 +115,10 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio
+        image: dfuse/dfuse-eosio:latest
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-v"]
+        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vv"]
         ports:
         - containerPort: 8888
           name: nodeos-api
@@ -50,47 +126,34 @@ spec:
         - containerPort: 8080
           name: mindrdr-mgr
           protocol: TCP
-
+        - containerPort: 9000
+          name: mon1
+          protocol: TCP
+        - containerPort: 9102
+          name: mon2
+          protocol: TCP
         volumeMounts:
-        - name: dfuse-blocks-telos-mainnet
+        - name: telos-mainnet-mindreader-data
           mountPath: /data
-
-        - name: dfuse-mindreader-config
+        - name: telos-mainnet-mindreader-config
           mountPath: /config/mindreader.yaml
           subPath: mindreader.yaml
-
-        - name: dfuse-mindreader-config-ini
+        - name: telos-mainnet-mindreader-config-ini
           mountPath: /config/config.ini
           subPath: config.ini
-
-        - name: dfuse-mindreader-genesis-json
-          mountPath: /config/genesis.json
-          subPath: genesis.json
-
         - name: dfuse-service-account-token-jsp6h
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-
-      # nodeSelector:
-      #   env: telos-mainnet
-
       volumes:
-      - name: dfuse-blocks-telos-mainnet
+      - name: telos-mainnet-mindreader-data
         persistentVolumeClaim:
-          claimName: dfuse-blocks-telos-mainnet
-
-      - name: dfuse-mindreader-config
+          claimName: telos-mainnet-mindreader-data
+      - name: telos-mainnet-mindreader-config
         configMap:
-          name: telos-mainnet-mindreader
-
-      - name: dfuse-mindreader-config-ini
+          name: telos-mainnet-mindreader-config
+      - name: telos-mainnet-mindreader-config-ini
         configMap:
           name: telos-mainnet-mindreader-config-ini
-
-      - name: dfuse-mindreader-genesis-json
-        configMap:
-          name: telos-mainnet-genesis-json
-
       - name: dfuse-service-account-token-jsp6h
         secret:
           secretName: dfuse-service-account-token-jsp6h
@@ -99,12 +162,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dfuse-telos-mainnet-mindreader
+  name: telos-mainnet-mindreader-service
   namespace: dfuse
   labels:
     app: dfuse
     end: telos-mainnet
 spec:
+  type: NodePort
   ports:
   - port: 8888
     targetPort: 8888
@@ -114,6 +178,14 @@ spec:
     targetPort: 8080
     protocol: TCP
     name: mindrdr-mgr
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: mon1
+  - port: 9102
+    targetPort: 9102
+    protocol: TCP
+    name: mon2
   selector:
     app: dfuse
     env: telos-mainnet
