@@ -13,7 +13,6 @@ data:
       - firehose
       flags:
         log-to-file: false
-	common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || account == 'kv.hypha' || account == 'voice.hypha' || account == 'husd.hypha' || account == 'token.seeds' || account == 'escrow.seeds' || receiver == 'escrow.seeds'
         common-blocks-store-url: gs://telos-testnet/merged
         common-blockstream-addr: ""
         common-blockmeta-addr: ""

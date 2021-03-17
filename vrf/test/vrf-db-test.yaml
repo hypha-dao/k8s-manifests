@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vrf-db-test-pvc
+  namespace: vrf-test
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vrf-db-test
+  namespace: vrf-test
+spec:
+  selector:
+    matchLabels:
+      app: vrf-db-test
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vrf-db-test
+    spec:
+      containers:
+      - name: vrf-db-test
+        image: sebastianmontero/vrf-db-test:09c19d9cd1c35b058228005a3cd4c0bcd824e609
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
+        envFrom:
+          - secretRef:
+             name: vrf-test-secrets
+        ports:
+         - containerPort: 5432
+           name: default
+        volumeMounts:
+        - name: vrf-db-test-pvc
+          mountPath: /var/lib/postgresql
+      volumes:
+        - name: vrf-db-test-pvc
+          persistentVolumeClaim:
+            claimName: vrf-db-test-pvc
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: dho-prometheus
+# spec:
+#   selector:
+#     app: dho-prometheus
+#   type: ClusterIP
+#   ports:
+#   - port: 9090
+#     targetPort: 9090
+#     protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vrf-db-test
+  namespace: vrf-test
+spec:
+  selector:
+    app: vrf-db-test
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+# ---
+# apiVersion: networking.k8s.io/v1beta1
+# kind: Ingress
+# metadata:
+#   name: dho-prometheus-ingress
+#   annotations:
+#     kubernetes.io/ingress.class: nginx
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+# spec:
+#   tls:
+#   - hosts:
+#     - dho-prometheus.tekit.io
+#     secretName: dho-prometheus-tekit-tls
+#   rules:
+#   - host: dho-prometheus.tekit.io
+#     http:
+#       paths:
+#       - backend:
+#           serviceName: dho-prometheus
+#           servicePort: 80

@@ -67,7 +67,6 @@ data:
         mindreader-log-to-zap: true
         mindreader-shutdown-delay: 20s
         mindreader-snapshot-store-url: gs://telos-testnet/snapshots
-        mindreader-restore-snapshot-name: 0090393127-05634a27cfea2d42ff599c8fda9e6fc3a0d4bbacf5c52092bf585a6545650f4e-snapshot.bin
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -114,7 +113,7 @@ spec:
         image: dfuse/dfuse-eosio:latest
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-v"]
+        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vv"]
         ports:
         - containerPort: 8888
           name: nodeos-api

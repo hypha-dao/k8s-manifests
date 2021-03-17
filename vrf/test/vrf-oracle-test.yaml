@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vrf-oracle-test
+  namespace: vrf-test
+spec:
+  selector:
+    matchLabels:
+      app: vrf-oracle-test
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vrf-oracle-test
+    spec:
+      containers:
+      - name: vrf-oracle-test
+        image: sebastianmontero/vrf-oracle-test:09c19d9cd1c35b058228005a3cd4c0bcd824e609
+        imagePullPolicy: IfNotPresent
+        #command: ["ls"]
+        command: ["/usr/local/go/bin/go"]
+        args: ["run", "./start-vrf-oracle.go"]
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
+        env:
+          - name: EOS_URL
+            value: "https://testnet.telos.caleos.io"
+          - name: FIREHOSE_ENDPOINT
+            value: "firehose-telos-testnet.dfuse.svc.cluster.local:9000"
+          - name: VRF_START_BLOCK_NUM
+            value: "96625100"
+          - name: VRF_CONTRACT
+            value: "vrftesttest1"
+          - name: VRF_JOB_TABLE
+            value: "jobs"
+        envFrom:
+          - secretRef:
+             name: vrf-test-secrets
