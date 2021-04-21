@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: vrf-db-test-pvc
-  namespace: vrf-test
+  name: bennyfi-vrf-db-test-pvc
+  namespace: bennyfi-test
   labels:
     app: vrf-db
     env: test
@@ -17,13 +17,13 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: vrf-db-test
-  namespace: vrf-test
+  name: bennyfi-vrf-db-test
+  namespace: bennyfi-test
   labels:
     app: vrf-db
     env: test
 spec:
-  serviceName: vrf-db-test
+  serviceName: bennyfi-vrf-db-test
   selector:
     matchLabels:
       app: vrf-db
@@ -36,7 +36,7 @@ spec:
         env: test
     spec:
       containers:
-      - name: vrf-db-test
+      - name: bennyfi-vrf-db-test
         image: sebastianmontero/vrf-db-test:8334f0d4cb51178e0634b3aeb08ad73ee2e29657
         # resources:
         #   limits:
@@ -44,17 +44,17 @@ spec:
         #     cpu: "500m"
         envFrom:
           - secretRef:
-             name: vrf-test-secrets
+             name: bennyfi-vrf-test-secrets
         ports:
          - containerPort: 5432
            name: default
         volumeMounts:
-        - name: vrf-db-test-pvc
+        - name: bennyfi-vrf-db-test-pvc
           mountPath: /var/lib/postgresql
       volumes:
-        - name: vrf-db-test-pvc
+        - name: bennyfi-vrf-db-test-pvc
           persistentVolumeClaim:
-            claimName: vrf-db-test-pvc
+            claimName: bennyfi-vrf-db-test-pvc
 # ---
 # apiVersion: v1
 # kind: Service
@@ -72,8 +72,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: vrf-db-test
-  namespace: vrf-test
+  name: bennyfi-vrf-db-test
+  namespace: bennyfi-test
   labels:
     app: vrf-db
     env: test

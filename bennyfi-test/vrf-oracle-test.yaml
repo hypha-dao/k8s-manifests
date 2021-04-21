@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vrf-oracle-test
-  namespace: vrf-test
+  name: bennyfi-vrf-oracle-test
+  namespace: bennyfi-test
   labels:
     app: vrf-oracle
     env: test
@@ -19,7 +19,7 @@ spec:
         env: test
     spec:
       containers:
-      - name: vrf-oracle-test
+      - name: bennyfi-vrf-oracle-test
         image: sebastianmontero/vrf-oracle-test:10d8af5f41daf66efca954a36fc7368545814b1c
         imagePullPolicy: IfNotPresent
         #command: ["ls"]
@@ -31,11 +31,11 @@ spec:
         #     cpu: "500m"
         env:
           - name: EOS_URL
-            value: "https://testnet.telos.caleos.io"
+            value: "http://bennyfi-test-dfuse-service-cluster.bennyfi-test.svc.cluster.local:8888"
           - name: FIREHOSE_ENDPOINT
-            value: "firehose-telos-testnet.dfuse.svc.cluster.local:9000"
+            value: "bennyfi-test-dfuse-service-cluster.bennyfi-test.svc.cluster.local:9000"
           - name: VRF_START_BLOCK_NUM
-            value: "101267116"
+            value: "1"
           - name: VRF_CONTRACT
             value: "vrftesttest1"
           - name: VRF_JOB_TABLE
@@ -44,4 +44,4 @@ spec:
             value: "100"
         envFrom:
           - secretRef:
-             name: vrf-test-secrets
+             name: bennyfi-vrf-test-secrets

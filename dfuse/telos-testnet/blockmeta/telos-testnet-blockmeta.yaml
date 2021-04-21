@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-testnet-blockmeta
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-testnet
+data:
+  blockmeta.yaml: |
+    start:
+      args:
+      - blockmeta
+      flags:
+        log-to-file: false
+        common-blocks-store-url: gs://telos-testnet/merged
+        common-oneblock-store-url: gs://telos-testnet/one
+        common-blockstream-addr: telos-testnet-relayer.dfuse.svc.cluster.local:13011
+        blockmeta-eos-api-upstream-addr: mindreader-telos-testnet-cluster.dfuse.svc.cluster.local:8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-testnet-blockmeta
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-testnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-testnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-testnet
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio:80117b5
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/blockmeta.yaml","-vv"]
+        ports:
+        - containerPort: 13014
+          name: grpc
+          protocol: TCP
+        volumeMounts:
+        - name: telos-testnet-blockmeta
+          mountPath: /config/blockmeta.yaml
+          subPath: blockmeta.yaml
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+      - name: telos-testnet-blockmeta
+        configMap:
+          name: telos-testnet-blockmeta
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
+  name: telos-testnet-blockmeta
+  namespace: dfuse
+  labels:
+    app: dfuse
+    end: telos-testnet
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: 13014
+    targetPort: 13014    
+    protocol: TCP
+  selector:
+    app: dfuse
+    env: telos-testnet

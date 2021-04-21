@@ -1,0 +1,317 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bennyfi-test
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bennyfi-test-genesis
+  namespace: bennyfi-test
+  labels:
+    app: dfuse
+    env: local
+data:
+  genesis.json: |
+    {
+      "initial_timestamp": "2018-12-05T08:55:11.000",
+      "initial_key": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+      "initial_configuration": {
+        "max_block_net_usage": 1048576,
+        "target_block_net_usage_pct": 1000,
+        "max_transaction_net_usage": 524288,
+        "base_per_transaction_net_usage": 12,
+        "net_usage_leeway": 500,
+        "context_free_discount_net_usage_num": 20,
+        "context_free_discount_net_usage_den": 100,
+        "max_block_cpu_usage": 100000,
+        "target_block_cpu_usage_pct": 500,
+        "max_transaction_cpu_usage": 50000,
+        "min_transaction_cpu_usage": 100,
+        "max_transaction_lifetime": 3600,
+        "deferred_trx_expiration_window": 600,
+        "max_transaction_delay": 3888000,
+        "max_inline_action_size": 4096,
+        "max_inline_action_depth": 4,
+        "max_authority_depth": 6
+      },
+      "initial_chain_id": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bennyfi-test-mindreader-config-ini
+  namespace: bennyfi-test
+  labels:
+    app: dfuse
+    env: local
+data:
+  config.ini: |
+    # Plugins
+    plugin = eosio::chain_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::http_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+
+    ## Required for state snapshots API call to work
+    plugin = eosio::producer_plugin
+    plugin = eosio::producer_api_plugin
+
+    # Chain
+    chain-state-db-size-mb = 8192
+    reversible-blocks-db-size-mb = 340
+    max-transaction-time = 5000
+
+    read-mode = head
+    p2p-accept-transactions = false
+    api-accept-transactions = false
+
+    # P2P
+    agent-name = dfuse for EOSIO (mindreader)
+    p2p-server-address = 127.0.0.1:9876
+    p2p-listen-endpoint = 127.0.0.1:9876
+    p2p-max-nodes-per-host = 2
+    connection-cleanup-period = 60
+
+    # HTTP
+    access-control-allow-origin = *
+    http-server-address = 0.0.0.0:8889
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+
+    # EOS VM is not supported on OS X platform, you **should** enable if you are running on Unix, it speeds up tremendously reprocessing
+    wasm-runtime = eos-vm-jit
+    eos-vm-oc-enable = true
+    eos-vm-oc-compile-threads = 4
+
+    # Enable deep mind
+    deep-mind = true
+    contracts-console = true
+
+    ## Peers
+    p2p-peer-address=localhost:9877
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bennyfi-test-nodeos-config-ini
+  namespace: bennyfi-test
+  labels:
+    app: dfuse
+    env: local
+data:
+  config.ini: |
+    plugin = eosio::http_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::producer_plugin
+    plugin = eosio::producer_api_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+
+    contracts-console = true
+
+    # HTTP
+    access-control-allow-origin = *
+    http-server-address = 0.0.0.0:8888
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+
+    # P2P
+    agent-name = dfuse producer node
+    p2p-server-address = 127.0.0.1:9877
+    p2p-listen-endpoint = 127.0.0.1:9877
+    p2p-max-nodes-per-host = 2
+    connection-cleanup-period = 60
+
+    producer-name = eosio
+    enable-stale-production = true
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bennyfi-test-dfuse-config
+  namespace: bennyfi-test
+  labels:
+    app: dfuse
+    env: local
+data:
+  dfuse.yaml: |
+    start:
+      args:
+      - merger
+      - mindreader
+      - blockmeta
+      - relayer
+      - firehose
+      - node-manager
+      flags:
+        log-to-file: false
+        common-blocks-store-url: /dfuse-data/blocks/merged
+        common-oneblock-store-url: /dfuse-data/blocks/one
+        mindreader-manager-api-addr: :8080
+        mindreader-nodeos-api-addr: localhost:8889
+        mindreader-config-dir: /config/mindreader
+        mindreader-snapshot-store-url: /dfuse-data/snapshots
+        mindreader-merge-threshold-block-age: 2h
+        mindreader-blocks-chan-capacity: 100000
+        mindreader-start-failure-handler: false
+        mindreader-log-to-zap: true
+        mindreader-shutdown-delay: 20s
+        merger-max-one-block-operations-batch-size: 50000
+        firehose-grpc-listen-addr: ":9000*"
+        node-manager-config-dir: /config/producer
+        node-manager-http-listen-addr: ":13008"
+        node-manager-nodeos-api-addr: ":8888"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bennyfi-test-dfuse-data
+  namespace: bennyfi-test
+  labels:
+    app: dfuse
+    env: local
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bennyfi-test-dfuse-statefulset
+  namespace: bennyfi-test
+  labels:
+    app: dfuse
+    env: local
+spec:
+  replicas: 1
+  serviceName: bennyfi-test-dfuse-service
+  selector:
+    matchLabels:
+      app: dfuse
+      env: local
+  template:
+    metadata:
+      namespace: bennyfi-test
+      labels:
+        app: dfuse
+        env: local
+    spec:
+      # serviceAccountName: dfuse-service-account
+      # serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio:80117b5
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/dfuse.yaml", "--data-dir", "/dfuse-data", "-vv"]
+        ports:
+        - containerPort: 8888
+          name: nodeos-api
+          protocol: TCP
+        - containerPort: 9000
+          name: firehose
+          protocol: TCP
+        volumeMounts:
+        - name: bennyfi-test-dfuse-data
+          mountPath: /dfuse-data
+        - name: bennyfi-test-dfuse-config
+          mountPath: /config/dfuse.yaml
+          subPath: dfuse.yaml
+        - name: bennyfi-test-mindreader-config-ini
+          mountPath: /config/mindreader/config.ini
+          subPath: config.ini
+        - name: bennyfi-mindreader-test-genesis
+          mountPath: /config/mindreader/genesis.json
+          subPath: genesis.json
+        - name: bennyfi-test-nodeos-config-ini
+          mountPath: /config/producer/config.ini
+          subPath: config.ini
+        - name: bennyfi-nodeos-test-genesis
+          mountPath: /config/producer/genesis.json
+          subPath: genesis.json
+        # - name: dfuse-service-account-token-jsp6h
+        #   readOnly: true
+        #   mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+      - name: bennyfi-test-dfuse-data
+        persistentVolumeClaim:
+          claimName: bennyfi-test-dfuse-data
+      - name: bennyfi-test-dfuse-config
+        configMap:
+          name: bennyfi-test-dfuse-config
+      - name: bennyfi-test-mindreader-config-ini
+        configMap:
+          name: bennyfi-test-mindreader-config-ini
+      - name: bennyfi-test-nodeos-config-ini
+        configMap:
+          name: bennyfi-test-nodeos-config-ini
+      - name: bennyfi-mindreader-test-genesis
+        configMap:
+          name: bennyfi-test-genesis
+      - name: bennyfi-nodeos-test-genesis
+        configMap:
+          name: bennyfi-test-genesis
+      # - name: dfuse-service-account-token-jsp6h
+      #   secret:
+      #     secretName: dfuse-service-account-token-jsp6h
+      #     defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bennyfi-test-dfuse-service
+  namespace: bennyfi-test
+  labels:
+    app: dfuse
+    env: local
+spec:
+  type: NodePort
+  ports:
+  - port: 8888
+    targetPort: 8888
+    nodePort: 32088
+    protocol: TCP
+    name: nodeos-api
+  selector:
+    app: dfuse
+    env: local
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # annotations:
+  #   service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
+  name: bennyfi-test-dfuse-service-cluster
+  namespace: bennyfi-test
+  labels:
+    app: dfuse
+    env: local
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: firehose
+  - port: 8888
+    targetPort: 8888
+    protocol: TCP
+    name: nodeos-api
+  selector:
+    app: dfuse
+    env: local

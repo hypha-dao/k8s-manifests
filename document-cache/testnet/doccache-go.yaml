@@ -44,7 +44,7 @@ spec:
           - name: EOS_ENDPOINT
             value: "https://testnet.telos.caleos.io"
           - name: START_BLOCK
-            value: "86748390"
+            value: "100437489"
           - name: DGRAPH_ALPHA_HOST
             value: "dgraph-test.document-cache.svc.cluster.local"
           - name: DGRAPH_ALPHA_EXTERNAL_PORT

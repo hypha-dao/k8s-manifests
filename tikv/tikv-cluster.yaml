@@ -7,7 +7,7 @@ spec:
   configUpdateStrategy: RollingUpdate
   pvReclaimPolicy: Retain
   enableDynamicConfiguration: true
-  schedulerName: tikv-scheduler
+  # schedulerName: tikv-scheduler
   pd:
     baseImage: pingcap/pd
     replicas: 3
@@ -34,10 +34,10 @@ spec:
       storage: "250Gi"
     annotations:
       tidb.pingcap.com/sysctl-init: "true"
-    podSecurityContext:
-      sysctls:
-      - name: net.core.somaxconn
-        value: "32768"
+    # podSecurityContext:
+    #   sysctls:
+    #   - name: net.core.somaxconn
+    #     value: "32768"
     config: {}
     nodeSelector:
       dedicated: tikv

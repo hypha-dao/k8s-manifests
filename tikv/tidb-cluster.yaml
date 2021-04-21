@@ -13,7 +13,7 @@ spec:
     baseImage: pingcap/pd
     replicas: 3
     requests:
-      storage: "10Gi"
+      storage: "50Gi"
     config:
       log:
         level: info
@@ -32,7 +32,7 @@ spec:
     baseImage: pingcap/tikv
     replicas: 3
     requests:
-      storage: "100Gi"
+      storage: "250Gi"
     annotations:
       tidb.pingcap.com/sysctl-init: "true"
     podSecurityContext:

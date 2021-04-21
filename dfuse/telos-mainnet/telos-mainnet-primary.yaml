@@ -1,6 +1,50 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: telos-mainnet-mindreader-config-ini
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  config.ini: |
+    plugin = eosio::chain_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::http_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+    chain-state-db-size-mb = 65536
+    max-transaction-time = 5000
+    read-mode = head
+    #p2p-accept-transactions = true
+    #api-accept-transactions = true
+    agent-name = telos-kitchen
+    p2p-server-address = 127.0.0.1:9876
+    p2p-listen-endpoint = 127.0.0.1:9876
+    http-server-address = 0.0.0.0:8888
+    p2p-max-nodes-per-host = 100
+    connection-cleanup-period = 60
+    access-control-allow-origin = *
+    access-control-allow-headers = *
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+    wasm-runtime = eos-vm-jit    
+    eos-vm-oc-enable = true
+    eos-vm-oc-compile-threads = 4
+    deep-mind = true
+    contracts-console = true
+    reversible-blocks-db-size-mb = 4096
+    p2p-peer-address = api.telos.kitchen:9876
+    p2p-peer-address = peer.telos.alohaeos.com:9876
+    p2p-peer-address = mainnet.telosusa.io:9877
+    p2p-peer-address = p2p.telos.eosdetroit.io:1337
+    p2p-peer-address = p2p.telos.cryptosuvi.io:2222
+    p2p-peer-address = api.telos.eostribe.io:7876
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: telos-mainnet-primary-config
   namespace: dfuse
   labels:
@@ -159,7 +203,7 @@ spec:
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
 
-        - name: telos-mainnet-config-ini
+        - name: telos-mainnet-mindreader-config-ini
           mountPath: /config/config.ini
           subPath: config.ini
 
@@ -176,9 +220,9 @@ spec:
         configMap:
           name: telos-mainnet-primary-config
       
-      - name: telos-mainnet-config-ini
+      - name: telos-mainnet-mindreader-config-ini
         configMap:
-          name: telos-mainnet-config-ini
+          name: telos-mainnet-mindreader-config-ini
 
       - name: dfuse-service-account-token-jsp6h
         secret:

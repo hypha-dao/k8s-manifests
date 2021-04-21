@@ -4,7 +4,7 @@ metadata:
   name: telos-mainnet-trxdb-loader-config
   namespace: dfuse
   labels:
-    app: dfuse-trxdb-loader
+    app: dfuse
     env: telos-mainnet
 data:
   trxdb-loader.yaml: |
@@ -14,11 +14,11 @@ data:
       flags:
         common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
         common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || receiver == 'eosio.msig' || account == 'kv.hypha' || receiver == 'kv.hypha' || account == 'voice.hypha' || receiver == 'voice.hypha' || account == 'husd.hypha' || receiver == 'husd.hypha' || account == 'escrow.seeds' || receiver == 'escrow.seeds' || account == 'accts.seeds' || receiver == 'accts.seeds' || account == 'harvst.seeds' || receiver == 'harvst.seeds' || account == 'settgs.seeds' || receiver == 'settgs.seeds' || account == 'funds.seeds' || receiver == 'funds.seeds' || account == 'invite.seeds' || receiver == 'invite.seeds' || account == 'join.seeds' || receiver == 'join.seeds' || account == 'rules.seeds' || receiver == 'rules.seeds' || account == 'histry.seeds' || receiver == 'histry.seeds' || account == 'policy.seeds' || receiver == 'policy.seeds' || account == 'token.seeds' || receiver == 'token.seeds' || account == 'free.seeds' || receiver == 'free.seeds' || account == 'gifts.seeds' || receiver == 'gifts.seeds' || account == 'milest.seeds' || receiver == 'milest.seeds' || account == 'hypha.seeds' || receiver == 'hypha.seeds' || account == 'allies.seeds' || receiver == 'allies.seeds' || account == 'refer.seeds' || receiver == 'refer.seeds' || account == 'bank.seeds' || receiver == 'bank.seeds' || account == 'system.seeds' || receiver == 'system.seeds'
-        common-blockstream-addr: telos-mainnet-relayer.dfuse.svc.cluster.local:13011
-        common-blockmeta-addr: telos-mainnet-blockmeta.dfuse.svc.cluster.local:13014
+        trxdb-loader-processing-type: patch
+        #trxdb-loader-start-block-num: 1
+        #trxdb-loader-stop-block-num: 60000000
         common-trxdb-dsn: tikv://basic-pd.default.svc:2379/trxdb?prefix=namespace_prefix
         common-blocks-store-url: gs://telos-mainnet/merged
-        common-chain-id: 4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,19 +26,19 @@ metadata:
   name: telos-mainnet-trxdb-loader
   namespace: dfuse
   labels:
-    app: dfuse-trxdb-loader
+    app: dfuse
     env: telos-mainnet
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dfuse-trxdb-loader
+      app: dfuse
       env: telos-mainnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse-trxdb-loader
+        app: dfuse
         env: telos-mainnet
     spec:
       serviceAccountName: dfuse-service-account
@@ -49,9 +49,7 @@ spec:
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/trxdb-loader.yaml", "--data-dir", "/data", "-v"]
-        ports:
-          - containerPort: 13020
-            name: http
+  
         volumeMounts:
         - name: telos-mainnet-trxdb-loader-config
           mountPath: /config/trxdb-loader.yaml
@@ -70,18 +68,3 @@ spec:
         secret:
           secretName: dfuse-service-account-token-jsp6h
           defaultMode: 420
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dfuse-telos-mainnet-trxdb-loader
-  namespace: dfuse
-  labels:
-    app: dfuse-trxdb-loader
-    env: telos-mainnet
-spec:
-  ports:
-  - port: 13020
-    targetPort: 13020
-    protocol: TCP
-    name: http

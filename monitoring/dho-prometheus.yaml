@@ -7,23 +7,52 @@ data:
     scrape_configs:
     - job_name: "dgraph"
       metrics_path: "/debug/prometheus_metrics"
-      scrape_interval: "2s"
+      scrape_interval: "10s"
       static_configs:
       - targets:
         - 3.232.158.110:6081     # For Dgraph zero, 6080 is the http endpoint exposing metrics.
         - 3.232.158.110:8081    # For Dgraph alpha, 8080 is the http endpoint exposing metrics.
     - job_name: "docCache"
       metrics_path: "/metrics"
-      scrape_interval: "2s"
+      scrape_interval: "10s"
       static_configs:
       - targets:
-        - 3.232.158.110:9091     # For Dgraph zero, 6080 is the http endpoint exposing metrics.
+        - 3.232.158.110:9091
+    - job_name: "dgraph-k8s"
+      metrics_path: "/debug/prometheus_metrics"
+      scrape_interval: "10s"
+      static_configs:
+      - targets:
+        - dgraph-mainnet.document-cache.svc.cluster.local:6080     # For Dgraph zero, 6080 is the http endpoint exposing metrics.
+        - dgraph-mainnet.document-cache.svc.cluster.local:8080    # For Dgraph alpha, 8080 is the http endpoint exposing metrics.
+    - job_name: "docCache-k8s"
+      metrics_path: "/metrics"
+      scrape_interval: "10s"
+      static_configs:
+      - targets:
+        - doccache-go-mainnet.document-cache.svc.cluster.local:2114
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dho-prometheus-pvc
+  labels:
+    app: dho-prometheus
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: dho-prometheus
 spec:
+  serviceName: dho-prometheus
   selector:
     matchLabels:
       app: dho-prometheus
@@ -36,33 +65,34 @@ spec:
       containers:
       - name: dho-prometheus
         image: prom/prometheus
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
+        command: ["/bin/prometheus"]
+        args: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus/data","--web.console.libraries=/usr/share/prometheus/console_libraries", "--web.console.templates=/usr/share/prometheus/consoles"]
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
         ports:
          - containerPort: 9090
            name: default
         volumeMounts:
         - name: config-volume
           mountPath: /etc/prometheus
+        - name: dho-prometheus-pvc
+          mountPath: /prometheus
+      initContainers:
+      - name: prometheus-data-permission-fix
+        image: busybox
+        command: ["/bin/chmod","-R","777", "/data"]
+        volumeMounts:
+        - name: dho-prometheus-pvc
+          mountPath: /data
       volumes:
         - name: config-volume
           configMap:
             name: dho-prometheus-config
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: dho-prometheus
-# spec:
-#   selector:
-#     app: dho-prometheus
-#   type: ClusterIP
-#   ports:
-#   - port: 9090
-#     targetPort: 9090
-#     protocol: TCP
+        - name: dho-prometheus-pvc
+          persistentVolumeClaim:
+            claimName: dho-prometheus-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -71,28 +101,41 @@ metadata:
 spec:
   selector:
     app: dho-prometheus
-  type: NodePort
+  type: ClusterIP
   ports:
   - port: 9090
     targetPort: 9090
     protocol: TCP
 # ---
-# apiVersion: networking.k8s.io/v1beta1
-# kind: Ingress
+# apiVersion: v1
+# kind: Service
 # metadata:
-#   name: dho-prometheus-ingress
-#   annotations:
-#     kubernetes.io/ingress.class: nginx
-#     cert-manager.io/cluster-issuer: letsencrypt-prod
+#   name: dho-prometheus
 # spec:
-#   tls:
-#   - hosts:
-#     - dho-prometheus.tekit.io
-#     secretName: dho-prometheus-tekit-tls
-#   rules:
-#   - host: dho-prometheus.tekit.io
-#     http:
-#       paths:
-#       - backend:
-#           serviceName: dho-prometheus
-#           servicePort: 80
+#   selector:
+#     app: dho-prometheus
+#   type: NodePort
+#   ports:
+#   - port: 9090
+#     targetPort: 9090
+#     protocol: TCP
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: dho-prometheus-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - dho-prometheus.tekit.io
+    secretName: dho-prometheus-tekit-tls
+  rules:
+  - host: dho-prometheus.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: dho-prometheus
+          servicePort: 9090

@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-testnet-relayer
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-testnet
+data:
+  relayer.yaml: |
+    start:
+      args:
+      - relayer
+      flags:
+        log-to-file: false
+        common-blocks-store-url: gs://telos-testnet/merged
+        common-oneblock-store-url: gs://telos-testnet/one
+        common-blockmeta-addr: telos-testnet-blockmeta.dfuse.svc.cluster.local:13014
+        relayer-source: mindreader-telos-testnet-cluster.dfuse.svc.cluster.local:13010
+        relayer-merger-addr: dfuse-telos-testnet-merger.dfuse.svc.cluster.local:13012
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telos-testnet-relayer
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-testnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dfuse
+      env: telos-testnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse
+        env: telos-testnet
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio:80117b5
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/relayer.yaml","-vv"]
+        ports:
+        - containerPort: 13011
+          name: grpc
+          protocol: TCP
+        volumeMounts:
+        - name: telos-testnet-relayer
+          mountPath: /config/relayer.yaml
+          subPath: relayer.yaml
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+      - name: telos-testnet-relayer
+        configMap:
+          name: telos-testnet-relayer
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
+  name: telos-testnet-relayer
+  namespace: dfuse
+  labels:
+    app: dfuse
+    end: telos-testnet
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: 13011
+    targetPort: 13011    
+    protocol: TCP
+  selector:
+    app: dfuse
+    env: telos-testnet

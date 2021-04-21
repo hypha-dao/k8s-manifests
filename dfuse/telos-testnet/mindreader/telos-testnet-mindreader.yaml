@@ -35,6 +35,7 @@ data:
     contracts-console = true
     p2p-peer-address = testnet.telosusa.io:19877
     p2p-peer-address = basho-p2p.telosuk.io:19876
+    p2p-peer-address = test.telos.kitchen:9876
     p2p-peer-address = peer.tlostest.alohaeos.com:9876
     p2p-peer-address = nickfury.tlos.goodblock.io:9876
     p2p-peer-address = api.basho.eostribe.io:9880
@@ -110,11 +111,14 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:latest
+        image: dfuse/dfuse-eosio:80117b5
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vv"]
         ports:
+        - containerPort: 13010
+          name: grpc
+          protocol: TCP
         - containerPort: 8888
           name: nodeos-api
           protocol: TCP
@@ -181,6 +185,32 @@ spec:
     targetPort: 9102
     protocol: TCP
     name: mon2
+  selector:
+    app: dfuse
+    env: telos-testnet
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
+  name: mindreader-telos-testnet-cluster
+  namespace: dfuse
+  labels:
+    app: dfuse
+    end: telos-testnet
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: 13010
+    targetPort: 13010    
+    protocol: TCP
+  - name: nodeos-api
+    port: 8888
+    targetPort: 8888
+    protocol: TCP
   selector:
     app: dfuse
     env: telos-testnet

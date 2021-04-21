@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doccache-go-mainnet
+  namespace: document-cache
+  labels:
+    app: doccache
+    env: telos-mainnet
+spec:
+  selector:
+    matchLabels:
+      app: doccache
+      env: telos-mainnet
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: doccache
+        env: telos-mainnet
+    spec:
+      containers:
+      - name: docache-go
+        image: sebastianmontero/hypha-doc-cache-go-mainnet:66915bfb314067f2cbd35446b4f31db1bdb7dbec
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/local/go/bin/go"]
+        args: ["run", "."]
+        ports:
+         - containerPort: 2114
+           name: prometheus
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
+        env:
+          - name: CONTRACT_NAME
+            value: "dao.hypha"
+          - name: DOC_TABLE_NAME
+            value: "documents"
+          - name: EDGE_TABLE_NAME
+            value: "edges"
+          - name: FIREHOSE_ENDPOINT
+            value: "firehose-telos-mainnet.dfuse.svc.cluster.local:9000"
+          - name: EOS_ENDPOINT
+            value: "https://telos.caleos.io"
+          - name: START_BLOCK
+            value: "136860100"
+          - name: DGRAPH_ALPHA_HOST
+            value: "dgraph-mainnet.document-cache.svc.cluster.local"
+          - name: DGRAPH_ALPHA_EXTERNAL_PORT
+            value: "9080"
+          - name: PROMETHEUS_PORT
+            value: "2114"
+          - name: HEART_BEAT_FREQUENCY
+            value: "100"
+        envFrom:
+          - secretRef:
+             name: doccache-secrets-mainnet
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doccache-go-mainnet
+  namespace: document-cache
+  labels:
+    app: doccache
+    env: telos-mainnet
+spec:
+  selector:
+    app: doccache
+    env: telos-mainnet
+  type: ClusterIP
+  ports:
+  - port: 2114
+    targetPort: 2114
+    protocol: TCP

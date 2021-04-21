@@ -1,62 +1,59 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-mainnet-merger
+  name: telos-mainnet-archive-50000
   namespace: dfuse
   labels:
-    app: dfuse-merger
+    app: dfuse-archive-50000
     env: telos-mainnet
 data:
-  merger.yaml: |
+  archive.yaml: |
     start:
       args:
-      - merger
+      - search-archive
       flags:
         log-to-file: true
-        #merger-batch-mode: true
-        #merger-start-block-num: 142007800
-        #merger-stop-block-num: 142009900
-        common-blocks-store-url: gs://telos-mainnet/merged
-        common-oneblock-store-url: gs://telos-mainnet/one-v2
-        merger-state-file: /dfuse-data/merger/merger.seen.gob
-        #merger-max-one-block-operations-batch-size: 15000
+        search-common-indices-store-url: gs://telos-mainnet/indices
+        search-archive-indices-dl-threads: 20
+        search-archive-tier-level: 50000
+        search-archive-writable-path: /dfuse-data/search/archiver
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: telos-mainnet-merger-pvc
+  name: telos-mainnet-archive-50000-pvc
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-archive-50000
     env: telos-mainnet
 spec:
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 3Gi
+      storage: 100Gi
   storageClassName: standard
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: telos-mainnet-merger
+  name: telos-mainnet-archive-50000
   namespace: dfuse
   labels:
-    app: dfuse-merger
+    app: dfuse-archive-50000
     env: telos-mainnet
 spec:
   replicas: 1
-  serviceName: telos-mainnet-merger
+  serviceName: telos-mainnet-archive-50000
   selector:
     matchLabels:
-      app: dfuse-merger
+      app: dfuse-archive-50000
       env: telos-mainnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse-merger
+        app: dfuse-archive-50000
         env: telos-mainnet
     spec:
       serviceAccountName: dfuse-service-account
@@ -66,26 +63,28 @@ spec:
         image: dfuse/dfuse-eosio:80117b5
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/merger.yaml","-v"]
+        args: ["start", "-c", "/config/archive.yaml","-v"]
         ports:
-          - containerPort: 13012
-            name: default
+          - containerPort: 13015
+            name: grpc
+          - containerPort: 13016
+            name: http
         volumeMounts:
-        - name: telos-mainnet-merger-pvc
+        - name: telos-mainnet-archive-50000-pvc
           mountPath: /dfuse-data
-        - name: telos-mainnet-merger
-          mountPath: /config/merger.yaml
-          subPath: merger.yaml
+        - name: telos-mainnet-archive-50000
+          mountPath: /config/archive.yaml
+          subPath: archive.yaml
         - name: dfuse-service-account-token-jsp6h
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
-      - name: telos-mainnet-merger-pvc
+      - name: telos-mainnet-archive-50000-pvc
         persistentVolumeClaim:
-          claimName: telos-mainnet-merger-pvc
-      - name: telos-mainnet-merger
+          claimName: telos-mainnet-archive-50000-pvc
+      - name: telos-mainnet-archive-50000
         configMap:
-          name: telos-mainnet-merger
+          name: telos-mainnet-archive-50000
       - name: dfuse-service-account-token-jsp6h
         secret:
           secretName: dfuse-service-account-token-jsp6h
@@ -94,13 +93,18 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dfuse-telos-mainnet-merger
+  name: dfuse-telos-mainnet-archive-50000
   namespace: dfuse
   labels:
-    app: dfuse-merger
-    end: telos-mainnet
+    app: dfuse-archive-50000
+    env: telos-mainnet
 spec:
   ports:
-  - port: 13012
-    targetPort: 13012
+  - port: 13015
+    targetPort: 13015
     protocol: TCP
+    name: grpc
+  - port: 13016
+    targetPort: 13016
+    protocol: TCP
+    name: http
