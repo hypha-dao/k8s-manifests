@@ -1,0 +1,494 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fi
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fi-genesis
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+data:
+  genesis.json: |
+    {
+      "initial_timestamp": "2018-12-05T08:55:11.000",
+      "initial_key": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+      "initial_configuration": {
+        "max_block_net_usage": 1048576,
+        "target_block_net_usage_pct": 1000,
+        "max_transaction_net_usage": 524288,
+        "base_per_transaction_net_usage": 12,
+        "net_usage_leeway": 500,
+        "context_free_discount_net_usage_num": 20,
+        "context_free_discount_net_usage_den": 100,
+        "max_block_cpu_usage": 100000,
+        "target_block_cpu_usage_pct": 500,
+        "max_transaction_cpu_usage": 50000,
+        "min_transaction_cpu_usage": 100,
+        "max_transaction_lifetime": 3600,
+        "deferred_trx_expiration_window": 600,
+        "max_transaction_delay": 3888000,
+        "max_inline_action_size": 4096,
+        "max_inline_action_depth": 4,
+        "max_authority_depth": 6
+      },
+      "initial_chain_id": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fi-mindreader-config-ini
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+data:
+  config.ini: |
+    # Plugins
+    plugin = eosio::chain_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::http_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+
+    ## Required for state snapshots API call to work
+    plugin = eosio::producer_plugin
+    plugin = eosio::producer_api_plugin
+
+    # Chain
+    chain-state-db-size-mb = 8192
+    reversible-blocks-db-size-mb = 340
+    max-transaction-time = 5000
+
+    read-mode = head
+    p2p-accept-transactions = false
+    api-accept-transactions = false
+
+    # P2P
+    agent-name = dfuse for EOSIO (mindreader)
+    p2p-server-address = 127.0.0.1:9876
+    p2p-listen-endpoint = 127.0.0.1:9876
+    p2p-max-nodes-per-host = 2
+    connection-cleanup-period = 60
+
+    # HTTP
+    access-control-allow-origin = *
+    http-server-address = 0.0.0.0:8889
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+
+    # EOS VM is not supported on OS X platform, you **should** enable if you are running on Unix, it speeds up tremendously reprocessing
+    wasm-runtime = eos-vm-jit
+    eos-vm-oc-enable = true
+    eos-vm-oc-compile-threads = 4
+
+    # Enable deep mind
+    deep-mind = true
+    contracts-console = true
+
+    ## Peers
+    p2p-peer-address=localhost:9877
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fi-nodeos-config-ini
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+data:
+  config.ini: |
+    plugin = eosio::http_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::producer_plugin
+    plugin = eosio::producer_api_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+
+    contracts-console = true
+
+    # HTTP
+    access-control-allow-origin = *
+    http-server-address = 0.0.0.0:8888
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+
+    # P2P
+    agent-name = dfuse producer node
+    p2p-server-address = 127.0.0.1:9877
+    p2p-listen-endpoint = 127.0.0.1:9877
+    p2p-max-nodes-per-host = 2
+    connection-cleanup-period = 60
+
+    producer-name = eosio
+    enable-stale-production = true
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fi-dfuse-config
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+data:
+  dfuse.yaml: |
+    start:
+      args:
+      - abicodec
+      - apiproxy
+      - blockmeta
+      - booter
+      - dashboard
+      - dgraphql
+      - eosq
+      - eosws
+      - merger
+      - mindreader
+      - node-manager
+      - relayer
+      - search-archive
+      - search-forkresolver
+      - search-indexer
+      - search-live
+      - search-router
+      - statedb
+      - tokenmeta
+      - trxdb-loader
+
+      #- merger
+      #- mindreader
+      #- blockmeta
+      #- relayer
+      #- firehose
+      #- node-manager
+      flags:
+        log-to-file: false
+        common-blocks-store-url: /dfuse-data/blocks/merged
+        common-oneblock-store-url: /dfuse-data/blocks/one
+        #mindreader-manager-api-addr: :8080
+        #mindreader-nodeos-api-addr: ":8889"
+        mindreader-config-dir: /config/mindreader
+        #mindreader-merge-threshold-block-age: 2h
+        #mindreader-blocks-chan-capacity: 100000
+        #mindreader-start-failure-handler: false
+        #mindreader-log-to-zap: true
+        #mindreader-shutdown-delay: 20s
+        merger-max-one-block-operations-batch-size: 50000
+        firehose-grpc-listen-addr: ":9000*"
+        node-manager-config-dir: /config/producer
+        node-manager-http-listen-addr: ":13008"
+        node-manager-nodeos-api-addr: ":8888"
+        eosq-available-networks: '[{ "id": "fi", "is_test": true, "name": "fi", "url": "https://q.fi1.tekit.io" }]'
+        eosq-default-network: fi
+        apiproxy-nodeos-http-addr: 'https://n.fi1.tekit.io'
+        eosq-api-endpoint-url: 'https://n.fi1.tekit.io'
+
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: fi-ingress
+  namespace: fi
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - n.fi1.tekit.io
+    - q.fi1.tekit.io
+    - dash.fi1.tekit.io
+    secretName: fi-tekit-tls
+  rules:
+  - host: n.fi1.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-service
+          servicePort: 8888
+  - host: q.fi1.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-eosq-service
+          servicePort: 13030
+  - host: dash.fi1.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-dash-service
+          servicePort: 8081
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fi-dfuse-data
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fi-dfuse-statefulset
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+spec:
+  replicas: 1
+  serviceName: fi-dfuse-service
+  selector:
+    matchLabels:
+      app: fi-dfuse
+      env: local
+  template:
+    metadata:
+      namespace: fi
+      labels:
+        app: fi-dfuse
+        env: local
+    spec:
+      # serviceAccountName: dfuse-service-account
+      # serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio:80117b5
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/dfuse.yaml", "--data-dir", "/dfuse-data", "-v"]
+        ports:
+        - containerPort: 8888
+          name: nodeos-api
+          protocol: TCP
+        - containerPort: 9000
+          name: firehose
+          protocol: TCP
+        - containerPort: 13030
+          name: eosq
+          protocol: TCP
+        - containerPort: 8081
+          name: dash
+          protocol: TCP
+        volumeMounts:
+        - name: fi-dfuse-data
+          mountPath: /dfuse-data
+        - name: fi-dfuse-config
+          mountPath: /config/dfuse.yaml
+          subPath: dfuse.yaml
+        - name: fi-mindreader-config-ini
+          mountPath: /config/mindreader/config.ini
+          subPath: config.ini
+        - name: fi-mindreader-test-genesis
+          mountPath: /config/mindreader/genesis.json
+          subPath: genesis.json
+        - name: fi-nodeos-config-ini
+          mountPath: /config/producer/config.ini
+          subPath: config.ini
+        - name: fi-nodeos-test-genesis
+          mountPath: /config/producer/genesis.json
+          subPath: genesis.json
+        # - name: dfuse-service-account-token-jsp6h
+        #   readOnly: true
+        #   mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+      - name: fi-dfuse-data
+        persistentVolumeClaim:
+          claimName: fi-dfuse-data
+      - name: fi-dfuse-config
+        configMap:
+          name: fi-dfuse-config
+      - name: fi-mindreader-config-ini
+        configMap:
+          name: fi-mindreader-config-ini
+      - name: fi-nodeos-config-ini
+        configMap:
+          name: fi-nodeos-config-ini
+      - name: fi-mindreader-test-genesis
+        configMap:
+          name: fi-genesis
+      - name: fi-nodeos-test-genesis
+        configMap:
+          name: fi-genesis
+      # - name: dfuse-service-account-token-jsp6h
+      #   secret:
+      #     secretName: dfuse-service-account-token-jsp6h
+      #     defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fi-dfuse-service
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+spec:
+  type: NodePort
+  ports:
+  - port: 8888
+    targetPort: 8888
+    protocol: TCP
+    name: nodeos-api
+  selector:
+    app: fi-dfuse
+    env: local
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fi-dfuse-eosq-service
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+spec:
+  type: NodePort
+  ports:
+  - port: 13030
+    targetPort: 13030
+    protocol: TCP
+    name: eosq
+  selector:
+    app: fi-dfuse
+    env: local
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fi-dfuse-dash-service
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+spec:
+  type: NodePort
+  ports:
+  - port: 8081
+    targetPort: 8081
+    protocol: TCP
+    name: dash
+  selector:
+    app: fi-dfuse
+    env: local
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # annotations:
+  #   service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
+  name: fi-dfuse-service-cluster
+  namespace: fi
+  labels:
+    app: fi-dfuse
+    env: local
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: firehose
+    ports:
+
+  - port: 8888
+    targetPort: 8888
+    protocol: TCP
+    name: nodeos-api
+
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: mindrdr-mgr
+
+  - port: 8999
+    targetPort: 8999
+    name: node-mgr
+    protocol: TCP
+
+  - targetPort: 13031
+    port: 13031
+    protocol: TCP
+    name: dash-grpc
+
+  - targetPort: 13008
+    port: 13008
+    protocol: TCP
+    name: dash-nmgr
+
+  - targetPort: 13010
+    port: 13010
+    protocol: TCP
+    name: mind-grpc
+
+  - targetPort: 13011
+    port: 13011
+    protocol: TCP
+    name: relayer
+
+  - targetPort: 9102
+    port: 9102
+    protocol: TCP
+    name: prom
+  
+  - targetPort: 13013
+    port: 13013
+    protocol: TCP
+    name: abi
+
+  - targetPort: 13018
+    port: 13018
+    protocol: TCP
+    name: abi-search
+  
+  - targetPort: 13023
+    port: 13023
+    protocol: TCP
+    name: dgql
+  
+  - targetPort: 13024
+    port: 13024
+    protocol: TCP
+    name: dgql-grpc
+  
+  - targetPort: 13026
+    port: 13026
+    protocol: TCP
+    name: eosws        
+
+  - targetPort: 13014
+    port: 13014
+    protocol: TCP
+    name: blockmeta
+
+  - targetPort: 13030
+    port: 13030
+    protocol: TCP
+    name: eosq
+
+  selector:
+    app: fi-dfuse
+    env: local
+  
