@@ -85,7 +85,7 @@ metadata:
   namespace: dfuse
   labels:
     app: eosio
-    end: telos-mainnet
+    env: telos-mainnet
 spec:
   ports:
   - port: 8888

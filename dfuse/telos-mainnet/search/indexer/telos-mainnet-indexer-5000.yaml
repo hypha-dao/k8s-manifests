@@ -22,7 +22,7 @@ data:
         search-common-indices-store-url: gs://telos-mainnet/indices
         #search-indexer-enable-batch-mode: true
         search-indexer-shard-size: 5000
-        #search-indexer-start-block: 148050000
+        #search-indexer-start-block: 149885000
         #search-indexer-stop-block: 146600000
         search-indexer-writable-path: /dfuse-data/search/indexer
 ---
@@ -116,3 +116,6 @@ spec:
     targetPort: 13022
     protocol: TCP
     name: http
+  selector:
+    app: dfuse-indexer-5000
+    env: telos-mainnet

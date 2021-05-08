@@ -4,7 +4,7 @@ metadata:
   name: telos-mainnet-blockmeta
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-blockmeta
     env: telos-mainnet
 data:
   blockmeta.yaml: |
@@ -24,19 +24,19 @@ metadata:
   name: telos-mainnet-blockmeta
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-blockmeta
     env: telos-mainnet
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dfuse
+      app: dfuse-blockmeta
       env: telos-mainnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse
+        app: dfuse-blockmeta
         env: telos-mainnet
     spec:
       serviceAccountName: dfuse-service-account
@@ -75,8 +75,8 @@ metadata:
   name: telos-mainnet-blockmeta
   namespace: dfuse
   labels:
-    app: dfuse
-    end: telos-mainnet
+    app: dfuse-blockmeta
+    env: telos-mainnet
 spec:
   type: ClusterIP
   ports:
@@ -85,5 +85,5 @@ spec:
     targetPort: 13014    
     protocol: TCP
   selector:
-    app: dfuse
+    app: dfuse-blockmeta
     env: telos-mainnet

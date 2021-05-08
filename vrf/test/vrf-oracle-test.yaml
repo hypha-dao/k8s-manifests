@@ -35,7 +35,7 @@ spec:
           - name: FIREHOSE_ENDPOINT
             value: "firehose-telos-testnet.dfuse.svc.cluster.local:9000"
           - name: VRF_START_BLOCK_NUM
-            value: "101267116"
+            value: "107920405"
           - name: VRF_CONTRACT
             value: "vrftesttest1"
           - name: VRF_JOB_TABLE

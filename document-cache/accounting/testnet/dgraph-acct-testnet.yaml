@@ -1,10 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: dgraph-test
+  name: dgraph-acct-testnet
   namespace: document-cache
   labels:
-    app: dgraph-test
+    app: dgraph-acct
+    env: telos-testnet
 spec:
   type: ClusterIP
   ports:
@@ -24,27 +25,33 @@ spec:
     targetPort: 8000
     name: http-ratel
   selector:
-    app: dgraph-test
+    app: dgraph-acct
+    env: telos-testnet
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: dgraph-test
+  name: dgraph-acct-testnet
   namespace: document-cache
+  labels:
+    app: dgraph-acct
+    env: telos-testnet
 spec:
-  serviceName: dgraph-test
+  serviceName: dgraph-acct-testnet
   replicas: 1
   selector:
       matchLabels:
-        app: dgraph-test
+        app: dgraph-acct
+        env: telos-testnet
   template:
     metadata:
       labels:
-        app: dgraph-test
+        app: dgraph-acct
+        env: telos-testnet
     spec:
       containers:
       - name: ratel
-        image: dgraph/dgraph:latest
+        image: dgraph/dgraph:v20.11-slash
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
@@ -52,7 +59,7 @@ spec:
         command:
           - dgraph-ratel
       - name: zero
-        image: dgraph/dgraph:latest
+        image: dgraph/dgraph:v20.11-slash
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5080
@@ -60,7 +67,7 @@ spec:
         - containerPort: 6080
           name: http-zero
         volumeMounts:
-        - name: datadir
+        - name: dgraph-acct-testnet-pvc
           mountPath: /dgraph
         command:
           - bash
@@ -69,7 +76,7 @@ spec:
             set -ex
             dgraph zero --my=$(hostname -f):5080
       - name: alpha
-        image: dgraph/dgraph:latest
+        image: dgraph/dgraph:v20.11-slash
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
@@ -77,7 +84,7 @@ spec:
         - containerPort: 9080
           name: grpc-alpha
         volumeMounts:
-        - name: datadir
+        - name: dgraph-acct-testnet-pvc
           mountPath: /dgraph
         env:
           - name: POD_NAMESPACE
@@ -89,17 +96,17 @@ spec:
           - "-c"
           - |
             set -ex
-            dgraph alpha --whitelist 10.0.0.0/8 --my=$(hostname -f):7080 --zero dgraph-test:5080
+            dgraph alpha --whitelist 10.0.0.0/8 --my=$(hostname -f):7080 --zero dgraph-acct-testnet:5080
       terminationGracePeriodSeconds: 60
       volumes:
-      - name: datadir
+      - name: dgraph-acct-testnet-pvc
         persistentVolumeClaim:
-          claimName: datadir
+          claimName: dgraph-acct-testnet-pvc
   updateStrategy:
     type: RollingUpdate
   volumeClaimTemplates:
   - metadata:
-      name: datadir
+      name: dgraph-acct-testnet-pvc
       annotations:
         volume.alpha.kubernetes.io/storage-class: anything
     spec:
@@ -107,12 +114,12 @@ spec:
         - "ReadWriteOnce"
       resources:
         requests:
-          storage: 5Gi
+          storage: 20Gi
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: dgraph-ingress-alpha-test
+  name: dgraph-acct-ingress-alpha-testnet
   namespace: document-cache
   annotations:
     kubernetes.io/ingress.class: "nginx"    
@@ -120,20 +127,20 @@ metadata:
 spec:
   tls:
   - hosts:
-    - alpha-test.tekit.io
-    secretName: dgraph-alpha-test-tekit-com-tls
+    - alpha-acct-test.tekit.io
+    secretName: dgraph-acct-alpha-testnet-tekit-com-tls
   rules:
-  - host: alpha-test.tekit.io
+  - host: alpha-acct-test.tekit.io
     http:
       paths:
       - backend:
-          serviceName: dgraph-test
+          serviceName: dgraph-acct-testnet
           servicePort: 8080
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: dgraph-ingress-ratel-test
+  name: dgraph-acct-ingress-ratel-testnet
   namespace: document-cache
   annotations:
     kubernetes.io/ingress.class: "nginx"    
@@ -141,58 +148,12 @@ metadata:
 spec:
   tls:
   - hosts:
-    - ratel-test.tekit.io
-    secretName: dgraph-ratel-test-tekit-com-tls
+    - ratel-acct-test.tekit.io
+    secretName: dgraph-acct-ratel-testnet-tekit-com-tls
   rules:
-  - host: ratel-test.tekit.io
+  - host: ratel-acct-test.tekit.io
     http:
       paths:
       - backend:
-          serviceName: dgraph-test
+          serviceName: dgraph-acct-testnet
           servicePort: 8000
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: docache-go
-  namespace: document-cache
-spec:
-  selector:
-    matchLabels:
-      app: docache-go
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: docache-go
-    spec:
-      containers:
-      - name: docache-go
-        image: sebastianmontero/hypha-doc-cache-go-testnet:7b55198015077484169707f5f36fb58b0a60f269
-        imagePullPolicy: IfNotPresent
-        command: ["/usr/local/go/bin/go"]
-        args: ["run", "."]
-        # resources:
-        #   limits:
-        #     memory: "128Mi"
-        #     cpu: "500m"
-        env:
-          - name: CONTRACT_NAME
-            value: "dao.hypha"
-          - name: DOC_TABLE_NAME
-            value: "documents"
-          - name: EDGE_TABLE_NAME
-            value: "edges"
-          - name: FIREHOSE_ENDPOINT
-            value: "firehose-telos-testnet.dfuse.svc.cluster.local:9000"
-          - name: EOS_ENDPOINT
-            value: "https://testnet.telos.caleos.io"
-          - name: START_BLOCK
-            value: "86748390"
-          - name: DGRAPH_ALPHA_HOST
-            value: "dgraph-test.document-cache.svc.cluster.local"
-          - name: DGRAPH_ALPHA_EXTERNAL_PORT
-            value: "9080"
-        envFrom:
-          - secretRef:
-             name: doccache-secrets

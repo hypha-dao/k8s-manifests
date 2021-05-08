@@ -1,28 +1,31 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-mainnet-archive-50000
+  name: telos-mainnet-hybrid-50
   namespace: dfuse
   labels:
-    app: dfuse-archive-50000
+    app: dfuse-hybrid-50
     env: telos-mainnet
 data:
-  archive.yaml: |
+  hybrid.yaml: |
     start:
       args:
       - search-archive
+      - search-live
       flags:
         log-to-file: false
-        # #log-format: stackdriver
+        #log-format: stackdriver
+        common-blocks-store-url: gs://telos-mainnet/merged
         common-blockmeta-addr: telos-mainnet-blockmeta.dfuse.svc.cluster.local:13014
+        common-blockstream-addr: telos-mainnet-relayer.dfuse.svc.cluster.local:13011
         search-common-indices-store-url: gs://telos-mainnet/indices
         search-common-mesh-dsn: etcd://etcd-cluster-client.dfuse.svc.cluster.local:2379/1
         search-common-mesh-service-version: v3
         search-common-mesh-publish-interval: 1s
-        search-archive-tier-level: 10
-        search-archive-shard-size: 50000
-        search-archive-start-block: 0
-        search-archive-stop-block: 145950000
+        search-archive-tier-level: 99
+        search-archive-shard-size: 50
+        search-archive-enable-moving-tail: true
+        search-archive-start-block: -5500
         search-archive-index-polling: true
         search-archive-sync-from-storage: true
         search-archive-sync-max-indexes: 10000000
@@ -30,43 +33,50 @@ data:
         search-archive-indices-dl-threads: 20
         search-archive-max-query-threads: 12
         search-archive-shutdown-delay: 5s
+        search-live-tier-level: 100
+        search-live-live-indices-path: /dfuse-data/search/live
+        search-live-truncation-threshold: 1
+        search-live-realtime-tolerance: 1m
+        search-live-shutdown-delay: 0s
+        search-live-start-block-drift-tolerance: 5200
+        search-live-head-delay-tolerance: 0
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: telos-mainnet-archive-50000-pvc
+  name: telos-mainnet-hybrid-50-pvc
   namespace: dfuse
   labels:
-    app: dfuse-archive-50000
+    app: dfuse-hybrid-50
     env: telos-mainnet
 spec:
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 50Gi
+      storage: 30Gi
   storageClassName: standard
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: telos-mainnet-archive-50000
+  name: telos-mainnet-hybrid-50
   namespace: dfuse
   labels:
-    app: dfuse-archive-50000
+    app: dfuse-hybrid-50
     env: telos-mainnet
 spec:
   replicas: 1
-  serviceName: telos-mainnet-archive-50000
+  serviceName: telos-mainnet-hybrid-50
   selector:
     matchLabels:
-      app: dfuse-archive-50000
+      app: dfuse-hybrid-50
       env: telos-mainnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse-archive-50000
+        app: dfuse-hybrid-50
         env: telos-mainnet
     spec:
       serviceAccountName: dfuse-service-account
@@ -76,28 +86,30 @@ spec:
         image: dfuse/dfuse-eosio:80117b5
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/archive.yaml","-vv"]
+        args: ["start", "-c", "/config/hybrid.yaml","-vv"]
         ports:
           - containerPort: 13015
             name: grpc
           - containerPort: 13016
             name: http
+          - containerPort: 13017
+            name: live-grpc
         volumeMounts:
-        - name: telos-mainnet-archive-50000-pvc
+        - name: telos-mainnet-hybrid-50-pvc
           mountPath: /dfuse-data
-        - name: telos-mainnet-archive-50000
-          mountPath: /config/archive.yaml
-          subPath: archive.yaml
+        - name: telos-mainnet-hybrid-50
+          mountPath: /config/hybrid.yaml
+          subPath: hybrid.yaml
         - name: dfuse-service-account-token-jsp6h
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
-      - name: telos-mainnet-archive-50000-pvc
+      - name: telos-mainnet-hybrid-50-pvc
         persistentVolumeClaim:
-          claimName: telos-mainnet-archive-50000-pvc
-      - name: telos-mainnet-archive-50000
+          claimName: telos-mainnet-hybrid-50-pvc
+      - name: telos-mainnet-hybrid-50
         configMap:
-          name: telos-mainnet-archive-50000
+          name: telos-mainnet-hybrid-50
       - name: dfuse-service-account-token-jsp6h
         secret:
           secretName: dfuse-service-account-token-jsp6h
@@ -106,10 +118,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dfuse-telos-mainnet-archive-50000
+  name: dfuse-telos-mainnet-hybrid-50
   namespace: dfuse
   labels:
-    app: dfuse-archive-50000
+    app: dfuse-hybrid-50
     env: telos-mainnet
 spec:
   ports:
@@ -121,6 +133,10 @@ spec:
     targetPort: 13016
     protocol: TCP
     name: http
+  - port: 13017
+    targetPort: 13017
+    protocol: TCP
+    name: live-grpc
   selector:
-    app: dfuse-archive-50000
+    app: dfuse-hybrid-50
     env: telos-mainnet

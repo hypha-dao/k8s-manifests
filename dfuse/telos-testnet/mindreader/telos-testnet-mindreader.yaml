@@ -165,7 +165,7 @@ metadata:
   namespace: dfuse
   labels:
     app: dfuse
-    end: telos-testnet
+    env: telos-testnet
 spec:
   type: NodePort
   ports:
@@ -199,7 +199,7 @@ metadata:
   namespace: dfuse
   labels:
     app: dfuse
-    end: telos-testnet
+    env: telos-testnet
 spec:
   type: ClusterIP
   ports:
