@@ -4,7 +4,7 @@ metadata:
   name: telos-testnet-relayer
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-relayer
     env: telos-testnet
 data:
   relayer.yaml: |
@@ -25,19 +25,19 @@ metadata:
   name: telos-testnet-relayer
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-relayer
     env: telos-testnet
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dfuse
+      app: dfuse-relayer
       env: telos-testnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse
+        app: dfuse-relayer
         env: telos-testnet
     spec:
       serviceAccountName: dfuse-service-account
@@ -76,8 +76,8 @@ metadata:
   name: telos-testnet-relayer
   namespace: dfuse
   labels:
-    app: dfuse
-    end: telos-testnet
+    app: dfuse-relayer
+    env: telos-testnet
 spec:
   type: ClusterIP
   ports:
@@ -86,5 +86,5 @@ spec:
     targetPort: 13011    
     protocol: TCP
   selector:
-    app: dfuse
+    app: dfuse-relayer
     env: telos-testnet

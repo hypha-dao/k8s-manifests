@@ -12,7 +12,8 @@ data:
       args:
       - search-indexer
       flags:
-        log-to-file: true
+        log-to-file: false
+        #log-format: stackdriver
         common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
         common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || receiver == 'eosio.msig' || account == 'kv.hypha' || receiver == 'kv.hypha' || account == 'voice.hypha' || receiver == 'voice.hypha' || account == 'husd.hypha' || receiver == 'husd.hypha' || account == 'escrow.seeds' || receiver == 'escrow.seeds' || account == 'accts.seeds' || receiver == 'accts.seeds' || account == 'harvst.seeds' || receiver == 'harvst.seeds' || account == 'settgs.seeds' || receiver == 'settgs.seeds' || account == 'funds.seeds' || receiver == 'funds.seeds' || account == 'invite.seeds' || receiver == 'invite.seeds' || account == 'join.seeds' || receiver == 'join.seeds' || account == 'rules.seeds' || receiver == 'rules.seeds' || account == 'histry.seeds' || receiver == 'histry.seeds' || account == 'policy.seeds' || receiver == 'policy.seeds' || account == 'token.seeds' || receiver == 'token.seeds' || account == 'free.seeds' || receiver == 'free.seeds' || account == 'gifts.seeds' || receiver == 'gifts.seeds' || account == 'milest.seeds' || receiver == 'milest.seeds' || account == 'hypha.seeds' || receiver == 'hypha.seeds' || account == 'allies.seeds' || receiver == 'allies.seeds' || account == 'refer.seeds' || receiver == 'refer.seeds' || account == 'bank.seeds' || receiver == 'bank.seeds' || account == 'system.seeds' || receiver == 'system.seeds'
         common-blocks-store-url: gs://telos-mainnet/merged
@@ -20,11 +21,12 @@ data:
         common-blockstream-addr: telos-mainnet-relayer.dfuse.svc.cluster.local:13011
         common-blockmeta-addr: telos-mainnet-blockmeta.dfuse.svc.cluster.local:13014
         search-common-indices-store-url: gs://telos-mainnet/indices
-        #search-indexer-enable-batch-mode: true
         search-indexer-shard-size: 50
-        search-indexer-start-block: 148050000
-        #search-indexer-stop-block: 146600000
+        search-indexer-start-block: -5500
         search-indexer-writable-path: /dfuse-data/search/indexer
+        search-indexer-enable-upload: true
+        search-indexer-delete-after-upload: true
+        search-indexer-enable-index-truncation: true
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -71,7 +73,7 @@ spec:
         image: dfuse/dfuse-eosio:80117b5
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/indexer.yaml","-v"]
+        args: ["start", "-c", "/config/indexer.yaml","-vvv"]
         ports:
           - containerPort: 13021
             name: grpc
@@ -116,3 +118,6 @@ spec:
     targetPort: 13022
     protocol: TCP
     name: http
+  selector:
+    app: dfuse-indexer-50
+    env: telos-mainnet

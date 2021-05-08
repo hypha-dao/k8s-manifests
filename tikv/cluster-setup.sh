@@ -16,3 +16,8 @@ gcloud container node-pools create tidb --cluster digscar --machine-type e2-stan
     --node-labels=dedicated=tidb --node-taints=dedicated=tidb:NoSchedule
 
 
+
+gcloud container node-pools create etcd --cluster digscar --machine-type e2-standard-2 --num-nodes=1 \
+    --node-labels=dedicated=etcd --node-taints=dedicated=etcd:NoSchedule --disk-size=15GB
+
+

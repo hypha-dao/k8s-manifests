@@ -85,3 +85,6 @@ spec:
     targetPort: 13020
     protocol: TCP
     name: http
+  selector:
+    app: dfuse-trxdb-loader
+    env: telos-mainnet

@@ -183,7 +183,7 @@ metadata:
   namespace: dfuse
   labels:
     app: dfuse
-    end: telos-testnet
+    env: telos-testnet
 spec:
   ports:
   - port: 8888

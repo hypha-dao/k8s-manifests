@@ -98,9 +98,12 @@ metadata:
   namespace: dfuse
   labels:
     app: dfuse-merger
-    end: telos-mainnet
+    env: telos-mainnet
 spec:
   ports:
   - port: 13012
     targetPort: 13012
     protocol: TCP
+  selector:
+    app: dfuse-merger
+    env: telos-mainnet

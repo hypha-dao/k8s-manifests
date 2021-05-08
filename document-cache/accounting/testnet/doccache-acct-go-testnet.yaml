@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: doccache-go-testnet
+  name: doccache-acct-go-testnet
   namespace: document-cache
   labels:
-    app: doccache
+    app: doccache-acct
     env: telos-testnet
 spec:
   selector:
     matchLabels:
-      app: doccache
+      app: doccache-acct
       env: telos-testnet
   replicas: 1
   template:
     metadata:
       labels:
-        app: doccache
+        app: doccache-acct
         env: telos-testnet
     spec:
       containers:
       - name: docache-go
-        image: sebastianmontero/hypha-doc-cache-go-testnet:66915bfb314067f2cbd35446b4f31db1bdb7dbec
+        image: sebastianmontero/hypha-doc-cache-go-testnet:51ff2dab2f700571a23e5c1f030b7703242e53e3
         imagePullPolicy: IfNotPresent
         command: ["/usr/local/go/bin/go"]
         args: ["run", "."]
@@ -33,7 +33,7 @@ spec:
         #     cpu: "500m"
         env:
           - name: CONTRACT_NAME
-            value: "dao.hypha"
+            value: "gh.hypha"
           - name: DOC_TABLE_NAME
             value: "documents"
           - name: EDGE_TABLE_NAME
@@ -41,11 +41,11 @@ spec:
           - name: FIREHOSE_ENDPOINT
             value: "firehose-telos-testnet.dfuse.svc.cluster.local:9000"
           - name: EOS_ENDPOINT
-            value: "https://telos.caleos.io"
+            value: "https://testnet.telos.caleos.io"
           - name: START_BLOCK
-            value: "100437489"
+            value: "107262545"
           - name: DGRAPH_ALPHA_HOST
-            value: "dgraph-testnet.document-cache.svc.cluster.local"
+            value: "dgraph-acct-testnet.document-cache.svc.cluster.local"
           - name: DGRAPH_ALPHA_EXTERNAL_PORT
             value: "9080"
           - name: PROMETHEUS_PORT
@@ -54,20 +54,20 @@ spec:
             value: "100"
         envFrom:
           - secretRef:
-             name: doccache-secrets-testnet
+             name: doccache-acct-secrets-testnet
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: doccache-go-testnet
+  name: doccache-acct-go-testnet
   namespace: document-cache
   labels:
-    app: doccache
+    app: doccache-acct
     env: telos-testnet
 spec:
   selector:
-    app: doccache
+    app: doccache-acct
     env: telos-testnet
   type: ClusterIP
   ports:
