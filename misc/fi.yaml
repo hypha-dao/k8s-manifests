@@ -147,13 +147,12 @@ data:
     start:
       args:
       - abicodec
-      - apiproxy
       - blockmeta
-      - booter
       - dashboard
       - dgraphql
       - eosq
       - eosws
+      - firehose
       - merger
       - mindreader
       - node-manager
@@ -166,70 +165,24 @@ data:
       - statedb
       - tokenmeta
       - trxdb-loader
-
-      #- merger
-      #- mindreader
-      #- blockmeta
-      #- relayer
-      #- firehose
-      #- node-manager
       flags:
         log-to-file: false
-        common-blocks-store-url: /dfuse-data/blocks/merged
-        common-oneblock-store-url: /dfuse-data/blocks/one
-        #mindreader-manager-api-addr: :8080
-        #mindreader-nodeos-api-addr: ":8889"
+        mindreader-manager-api-addr: :8080
+        mindreader-nodeos-api-addr: :8889
         mindreader-config-dir: /config/mindreader
-        #mindreader-merge-threshold-block-age: 2h
-        #mindreader-blocks-chan-capacity: 100000
-        #mindreader-start-failure-handler: false
-        #mindreader-log-to-zap: true
-        #mindreader-shutdown-delay: 20s
+        mindreader-merge-threshold-block-age: 2h
+        mindreader-blocks-chan-capacity: 100000
+        mindreader-start-failure-handler: false
+        mindreader-log-to-zap: true
+        mindreader-shutdown-delay: 20s
         merger-max-one-block-operations-batch-size: 50000
         firehose-grpc-listen-addr: ":9000*"
         node-manager-config-dir: /config/producer
         node-manager-http-listen-addr: ":13008"
         node-manager-nodeos-api-addr: ":8888"
-        eosq-available-networks: '[{ "id": "fi", "is_test": true, "name": "fi", "url": "https://q.fi1.tekit.io" }]'
+        eosq-available-networks: '[{ "id": "fi", "is_test": true, "name": "fi", "url": "https://dapi.fi2.tekit.io" }]'
         eosq-default-network: fi
-        apiproxy-nodeos-http-addr: 'https://n.fi1.tekit.io'
-        eosq-api-endpoint-url: 'https://n.fi1.tekit.io'
-
----
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: fi-ingress
-  namespace: fi
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  tls:
-  - hosts:
-    - n.fi1.tekit.io
-    - q.fi1.tekit.io
-    - dash.fi1.tekit.io
-    secretName: fi-tekit-tls
-  rules:
-  - host: n.fi1.tekit.io
-    http:
-      paths:
-      - backend:
-          serviceName: fi-dfuse-service
-          servicePort: 8888
-  - host: q.fi1.tekit.io
-    http:
-      paths:
-      - backend:
-          serviceName: fi-dfuse-eosq-service
-          servicePort: 13030
-  - host: dash.fi1.tekit.io
-    http:
-      paths:
-      - backend:
-          serviceName: fi-dfuse-dash-service
-          servicePort: 8081
+        eosq-api-endpoint-url: 'https://dapi.fi2.tekit.io'
 
 ---
 apiVersion: v1
@@ -245,7 +198,7 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
+      storage: 50Gi
   storageClassName: standard
 ---
 apiVersion: apps/v1
@@ -281,6 +234,15 @@ spec:
         ports:
         - containerPort: 8888
           name: nodeos-api
+          protocol: TCP
+        - containerPort: 13023
+          name: dgql-http
+          protocol: TCP
+        - containerPort: 13024
+          name: dgql-grpc
+          protocol: TCP
+        - containerPort: 13026
+          name: eosws
           protocol: TCP
         - containerPort: 9000
           name: firehose
@@ -335,64 +297,7 @@ spec:
       #   secret:
       #     secretName: dfuse-service-account-token-jsp6h
       #     defaultMode: 420
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: fi-dfuse-service
-  namespace: fi
-  labels:
-    app: fi-dfuse
-    env: local
-spec:
-  type: NodePort
-  ports:
-  - port: 8888
-    targetPort: 8888
-    protocol: TCP
-    name: nodeos-api
-  selector:
-    app: fi-dfuse
-    env: local
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: fi-dfuse-eosq-service
-  namespace: fi
-  labels:
-    app: fi-dfuse
-    env: local
-spec:
-  type: NodePort
-  ports:
-  - port: 13030
-    targetPort: 13030
-    protocol: TCP
-    name: eosq
-  selector:
-    app: fi-dfuse
-    env: local
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: fi-dfuse-dash-service
-  namespace: fi
-  labels:
-    app: fi-dfuse
-    env: local
-spec:
-  type: NodePort
-  ports:
-  - port: 8081
-    targetPort: 8081
-    protocol: TCP
-    name: dash
-  selector:
-    app: fi-dfuse
-    env: local
 ---
 apiVersion: v1
 kind: Service
@@ -411,84 +316,122 @@ spec:
     targetPort: 9000
     protocol: TCP
     name: firehose
-    ports:
-
   - port: 8888
     targetPort: 8888
     protocol: TCP
     name: nodeos-api
-
-  - port: 8080
-    targetPort: 8080
-    protocol: TCP
-    name: mindrdr-mgr
-
-  - port: 8999
-    targetPort: 8999
-    name: node-mgr
-    protocol: TCP
-
-  - targetPort: 13031
-    port: 13031
-    protocol: TCP
-    name: dash-grpc
-
-  - targetPort: 13008
-    port: 13008
-    protocol: TCP
-    name: dash-nmgr
-
-  - targetPort: 13010
-    port: 13010
-    protocol: TCP
-    name: mind-grpc
-
-  - targetPort: 13011
-    port: 13011
-    protocol: TCP
-    name: relayer
-
-  - targetPort: 9102
-    port: 9102
-    protocol: TCP
-    name: prom
-  
-  - targetPort: 13013
-    port: 13013
-    protocol: TCP
-    name: abi
-
-  - targetPort: 13018
-    port: 13018
-    protocol: TCP
-    name: abi-search
-  
   - targetPort: 13023
     port: 13023
     protocol: TCP
-    name: dgql
-  
+    name: dgql-http
   - targetPort: 13024
     port: 13024
     protocol: TCP
     name: dgql-grpc
-  
   - targetPort: 13026
     port: 13026
     protocol: TCP
     name: eosws        
-
-  - targetPort: 13014
-    port: 13014
-    protocol: TCP
-    name: blockmeta
-
   - targetPort: 13030
     port: 13030
     protocol: TCP
     name: eosq
-
+  - targetPort: 8081
+    port: 8081
+    protocol: TCP
+    name: dashboard
   selector:
     app: fi-dfuse
     env: local
   
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: fi-ingress
+  namespace: fi
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - n.fi2.tekit.io
+    - q.fi2.tekit.io
+    - dash.fi2.tekit.io
+    - dapi.fi2.tekit.io
+    secretName: fi-tekit-tls
+  rules:
+  - host: n.fi2.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-service
+          servicePort: 8888
+  - host: q.fi2.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-eosq-service
+          servicePort: 13030
+  - host: dash.fi2.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-dash-service
+          servicePort: 8081
+  - host: dapi.fi2.tekit.io
+    http:
+      paths:
+      - path: /dfuse.eosio.v1.GraphQL/
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13024
+      - path: /dfuse.graphql.v1.GraphQL/
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13024
+      - path: /grpc.reflection.v1alpha.ServerReflection/
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13024
+      - path: /graphiql/
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13023
+      - path: /graphql
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13023
+      - path: /v1/chain/
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13026
+      - path: /v1/stream
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13026
+      - path: /v0/
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13026
+      - path: /v1/
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13026
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13026
