@@ -180,9 +180,11 @@ data:
         node-manager-config-dir: /config/producer
         node-manager-http-listen-addr: ":13008"
         node-manager-nodeos-api-addr: ":8888"
-        eosq-available-networks: '[{ "id": "fi", "is_test": true, "name": "fi", "url": "https://dapi.fi2.tekit.io" }]'
+        eosq-available-networks: '[{ "id": "fi", "is_test": true, "name": "fi", "url": "https://dapi.fi1.tekit.io" }]'
         eosq-default-network: fi
-        eosq-api-endpoint-url: 'https://dapi.fi2.tekit.io'
+        eosq-api-endpoint-url: 'https://dapi.fi1.tekit.io'
+        dashboard-eos-node-manager-api-addr: 'https://nm.fi1.tekit.io'
+        dashboard-metrics-api-addr: 'https://pm.fi1.tekit.io'
 
 ---
 apiVersion: v1
@@ -232,8 +234,20 @@ spec:
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/dfuse.yaml", "--data-dir", "/dfuse-data", "-v"]
         ports:
+        - containerPort: 8081
+          name: dash
+          protocol: TCP
         - containerPort: 8888
           name: nodeos-api
+          protocol: TCP
+        - containerPort: 9000
+          name: firehose
+          protocol: TCP
+        - containerPort: 9102
+          name: metrics
+          protocol: TCP
+        - containerPort: 13008
+          name: nm-api
           protocol: TCP
         - containerPort: 13023
           name: dgql-http
@@ -244,14 +258,8 @@ spec:
         - containerPort: 13026
           name: eosws
           protocol: TCP
-        - containerPort: 9000
-          name: firehose
-          protocol: TCP
         - containerPort: 13030
           name: eosq
-          protocol: TCP
-        - containerPort: 8081
-          name: dash
           protocol: TCP
         volumeMounts:
         - name: fi-dfuse-data
@@ -312,14 +320,26 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 9000
-    targetPort: 9000
+  - targetPort: 8081
+    port: 8081
     protocol: TCP
-    name: firehose
+    name: dashboard
   - port: 8888
     targetPort: 8888
     protocol: TCP
     name: nodeos-api
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: firehose
+  - port: 9102
+    targetPort: 9102
+    protocol: TCP
+    name: metrics
+  - targetPort: 13008
+    port: 13008
+    protocol: TCP
+    name: nm-api
   - targetPort: 13023
     port: 13023
     protocol: TCP
@@ -336,10 +356,6 @@ spec:
     port: 13030
     protocol: TCP
     name: eosq
-  - targetPort: 8081
-    port: 8081
-    protocol: TCP
-    name: dashboard
   selector:
     app: fi-dfuse
     env: local
@@ -358,31 +374,15 @@ metadata:
 spec:
   tls:
   - hosts:
-    - n.fi2.tekit.io
-    - q.fi2.tekit.io
-    - dash.fi2.tekit.io
-    - dapi.fi2.tekit.io
+    - dapi.fi1.tekit.io
+    - dash.fi1.tekit.io
+    - n.fi1.tekit.io
+    - nm.fi1.tekit.io
+    - pm.fi1.tekit.io
+    - q.fi1.tekit.io
     secretName: fi-tekit-tls
   rules:
-  - host: n.fi2.tekit.io
-    http:
-      paths:
-      - backend:
-          serviceName: fi-dfuse-service
-          servicePort: 8888
-  - host: q.fi2.tekit.io
-    http:
-      paths:
-      - backend:
-          serviceName: fi-dfuse-eosq-service
-          servicePort: 13030
-  - host: dash.fi2.tekit.io
-    http:
-      paths:
-      - backend:
-          serviceName: fi-dfuse-dash-service
-          servicePort: 8081
-  - host: dapi.fi2.tekit.io
+  - host: dapi.fi1.tekit.io
     http:
       paths:
       - path: /dfuse.eosio.v1.GraphQL/
@@ -435,3 +435,33 @@ spec:
         backend:
           serviceName: fi-dfuse-service-cluster
           servicePort: 13026
+  - host: dash.fi1.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 8081
+  - host: n.fi1.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 8888
+  - host: nm.fi1.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13008
+  - host: pm.fi1.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 9102
+  - host: q.fi1.tekit.io
+    http:
+      paths:
+      - backend:
+          serviceName: fi-dfuse-service-cluster
+          servicePort: 13030
