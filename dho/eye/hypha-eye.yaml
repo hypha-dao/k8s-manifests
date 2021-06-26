@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hypha-eye
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hypha-eye
+  namespace: hypha-eye
+  labels:
+    app: hypha-eye
+    env: prod
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: hypha-eye
+  namespace: hypha-eye
+  labels:
+    app: hypha-eye
+    env: prod
+spec:
+  serviceName: hypha-eye
+  selector:
+    matchLabels:
+      app: hypha-eye
+      env: prod
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: hypha-eye
+        env: prod
+    spec:
+      containers:
+      - name: hypha-eye
+        image: sebastianmontero/hypha-eye-prod:latest
+        imagePullPolicy: IfNotPresent
+        command: ["npm"]
+        args: ["run", "start"]
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
+        env:
+          - name: PORT
+            value: "3000"
+          - name: DGRAPH_ENDPOINT
+            value: "https://alpha.tekit.io"
+          - name: DATA_PATH
+            value: /hypha-eye-data
+          - name: STORE_NAME
+            value: "hypha-eye.json"
+        ports:
+         - containerPort: 3000
+           name: default
+        volumeMounts:
+        - name: hypha-eye
+          mountPath: /hypha-eye-data
+      volumes:
+        - name: hypha-eye
+          persistentVolumeClaim:
+            claimName: hypha-eye
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hypha-eye
+  namespace: hypha-eye
+  labels:
+    app: hypha-eye
+    env: prod
+spec:
+  selector:
+    app: hypha-eye
+    env: prod
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hypha-eye
+  namespace: hypha-eye
+  labels:
+    app: hypha-eye
+    env: prod
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - hypha-eye.tekit.io
+    secretName: hypha-eye.tekit.io
+  rules:
+  - host: hypha-eye.tekit.io
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: hypha-eye
+            port:
+              number: 3000

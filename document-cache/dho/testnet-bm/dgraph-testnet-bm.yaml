@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: dgraph-{{ .Release.Name }}
+  name: dgraph-testnet-bm
   namespace: document-cache
   labels:
-    app: dgraph
+    app: dgraph-bm
     env: telos-testnet
 spec:
   type: ClusterIP
@@ -25,33 +25,33 @@ spec:
     targetPort: 8000
     name: http-ratel
   selector:
-    app: dgraph
+    app: dgraph-bm
     env: telos-testnet
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: dgraph-{{ .Release.Name }}
+  name: dgraph-testnet-bm
   namespace: document-cache
   labels:
-    app: dgraph
+    app: dgraph-bm
     env: telos-testnet
 spec:
-  serviceName: dgraph
+  serviceName: dgraph-testnet-bm
   replicas: 1
   selector:
       matchLabels:
-        app: dgraph
+        app: dgraph-bm
         env: telos-testnet
   template:
     metadata:
       labels:
-        app: dgraph
+        app: dgraph-bm
         env: telos-testnet
     spec:
       containers:
       - name: ratel
-        image: dgraph/dgraph:v20.11-slash
+        image: dgraph/dgraph:v20.11.3
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
@@ -59,7 +59,7 @@ spec:
         command:
           - dgraph-ratel
       - name: zero
-        image: dgraph/dgraph:v20.11-slash
+        image: dgraph/dgraph:v20.11.3
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5080
@@ -67,7 +67,7 @@ spec:
         - containerPort: 6080
           name: http-zero
         volumeMounts:
-        - name: dgraph-testnet-pvc
+        - name: dgraph-testnet-bm-pvc
           mountPath: /dgraph
         command:
           - bash
@@ -76,7 +76,7 @@ spec:
             set -ex
             dgraph zero --my=$(hostname -f):5080
       - name: alpha
-        image: dgraph/dgraph:v20.11-slash
+        image: dgraph/dgraph:v20.11.3
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
@@ -84,7 +84,7 @@ spec:
         - containerPort: 9080
           name: grpc-alpha
         volumeMounts:
-        - name: dgraph-testnet-pvc
+        - name: dgraph-testnet-bm-pvc
           mountPath: /dgraph
         env:
           - name: POD_NAMESPACE
@@ -96,17 +96,17 @@ spec:
           - "-c"
           - |
             set -ex
-            dgraph alpha --whitelist 10.0.0.0/8 --my=$(hostname -f):7080 --zero dgraph-testnet:5080
+            dgraph alpha --whitelist 10.0.0.0/8 --my=$(hostname -f):7080 --zero dgraph-testnet-bm:5080
       terminationGracePeriodSeconds: 60
       volumes:
-      - name: dgraph-testnet-pvc
+      - name: dgraph-testnet-bm-pvc
         persistentVolumeClaim:
-          claimName: dgraph-testnet-pvc
+          claimName: dgraph-testnet-bm-pvc
   updateStrategy:
     type: RollingUpdate
   volumeClaimTemplates:
   - metadata:
-      name: dgraph-testnet-pvc
+      name: dgraph-testnet-bm-pvc
       annotations:
         volume.alpha.kubernetes.io/storage-class: anything
     spec:
@@ -119,7 +119,7 @@ spec:
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: dgraph-ingress-alpha-testnet
+  name: dgraph-ingress-alpha-testnet-bm
   namespace: document-cache
   annotations:
     kubernetes.io/ingress.class: "nginx"    
@@ -127,20 +127,20 @@ metadata:
 spec:
   tls:
   - hosts:
-    - alpha-test.tekit.io
-    secretName: dgraph-alpha-testnet-tekit-com-tls
+    - alpha-test-bm.tekit.io
+    secretName: dgraph-alpha-testnet-bm-tekit-com-tls
   rules:
-  - host: alpha-test.tekit.io
+  - host: alpha-test-bm.tekit.io
     http:
       paths:
       - backend:
-          serviceName: dgraph-testnet
+          serviceName: dgraph-testnet-bm
           servicePort: 8080
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: dgraph-ingress-ratel-testnet
+  name: dgraph-ingress-ratel-testnet-bm
   namespace: document-cache
   annotations:
     kubernetes.io/ingress.class: "nginx"    
@@ -148,12 +148,12 @@ metadata:
 spec:
   tls:
   - hosts:
-    - ratel-test.tekit.io
-    secretName: dgraph-ratel-testnet-tekit-com-tls
+    - ratel-test-bm.tekit.io
+    secretName: dgraph-ratel-testnet-bm-tekit-com-tls
   rules:
-  - host: ratel-test.tekit.io
+  - host: ratel-test-bm.tekit.io
     http:
       paths:
       - backend:
-          serviceName: dgraph-testnet
+          serviceName: dgraph-testnet-bm
           servicePort: 8000

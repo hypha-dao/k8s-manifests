@@ -4,18 +4,18 @@ metadata:
   name: bennyfi-vrf-oracle-test
   namespace: bennyfi-test
   labels:
-    app: vrf-oracle
+    app: vrf-oracle-bennyfi-test
     env: test
 spec:
   selector:
     matchLabels:
-      app: vrf-oracle
+      app: vrf-oracle-bennyfi-test
       env: test
   replicas: 1
   template:
     metadata:
       labels:
-        app: vrf-oracle
+        app: vrf-oracle-bennyfi-test
         env: test
     spec:
       containers:

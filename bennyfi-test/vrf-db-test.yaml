@@ -4,7 +4,7 @@ metadata:
   name: bennyfi-vrf-db-test-pvc
   namespace: bennyfi-test
   labels:
-    app: vrf-db
+    app: vrf-db-bennyfy-test
     env: test
 spec:
   accessModes:
@@ -20,19 +20,19 @@ metadata:
   name: bennyfi-vrf-db-test
   namespace: bennyfi-test
   labels:
-    app: vrf-db
+    app: vrf-db-bennyfy-test
     env: test
 spec:
   serviceName: bennyfi-vrf-db-test
   selector:
     matchLabels:
-      app: vrf-db
+      app: vrf-db-bennyfy-test
       env: test
   replicas: 1
   template:
     metadata:
       labels:
-        app: vrf-db
+        app: vrf-db-bennyfy-test
         env: test
     spec:
       containers:
@@ -75,11 +75,11 @@ metadata:
   name: bennyfi-vrf-db-test
   namespace: bennyfi-test
   labels:
-    app: vrf-db
+    app: vrf-db-bennyfy-test
     env: test
 spec:
   selector:
-    app: vrf-db
+    app: vrf-db-bennyfy-test
     env: test
   ports:
   - port: 5432

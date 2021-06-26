@@ -10,7 +10,7 @@ metadata:
   name: bennyfi-test-genesis
   namespace: bennyfi-test
   labels:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 data:
   genesis.json: |
@@ -46,7 +46,7 @@ metadata:
   name: bennyfi-test-mindreader-config-ini
   namespace: bennyfi-test
   labels:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 data:
   config.ini: |
@@ -103,7 +103,7 @@ metadata:
   name: bennyfi-test-nodeos-config-ini
   namespace: bennyfi-test
   labels:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 data:
   config.ini: |
@@ -115,6 +115,7 @@ data:
     plugin = eosio::net_api_plugin
 
     contracts-console = true
+    enable-account-queries = true
 
     # HTTP
     access-control-allow-origin = *
@@ -140,7 +141,7 @@ metadata:
   name: bennyfi-test-dfuse-config
   namespace: bennyfi-test
   labels:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 data:
   dfuse.yaml: |
@@ -178,14 +179,14 @@ metadata:
   name: bennyfi-test-dfuse-data
   namespace: bennyfi-test
   labels:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 spec:
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 100Gi
+      storage: 20Gi
   storageClassName: standard
 ---
 apiVersion: apps/v1
@@ -194,20 +195,20 @@ metadata:
   name: bennyfi-test-dfuse-statefulset
   namespace: bennyfi-test
   labels:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 spec:
   replicas: 1
   serviceName: bennyfi-test-dfuse-service
   selector:
     matchLabels:
-      app: dfuse
+      app: dfuse-bennyfi-test
       env: local
   template:
     metadata:
       namespace: bennyfi-test
       labels:
-        app: dfuse
+        app: dfuse-bennyfi-test
         env: local
     spec:
       # serviceAccountName: dfuse-service-account
@@ -276,7 +277,7 @@ metadata:
   name: bennyfi-test-dfuse-service
   namespace: bennyfi-test
   labels:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 spec:
   type: NodePort
@@ -287,7 +288,7 @@ spec:
     protocol: TCP
     name: nodeos-api
   selector:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 
 ---
@@ -299,7 +300,7 @@ metadata:
   name: bennyfi-test-dfuse-service-cluster
   namespace: bennyfi-test
   labels:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local
 spec:
   type: ClusterIP
@@ -313,5 +314,5 @@ spec:
     protocol: TCP
     name: nodeos-api
   selector:
-    app: dfuse
+    app: dfuse-bennyfi-test
     env: local

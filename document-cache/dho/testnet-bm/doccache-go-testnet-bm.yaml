@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doccache-go-testnet-bm
+  namespace: document-cache
+  labels:
+    app: doccache-bm
+    env: telos-testnet
+spec:
+  selector:
+    matchLabels:
+      app: doccache-bm
+      env: telos-testnet
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: doccache-bm
+        env: telos-testnet
+    spec:
+      containers:
+      - name: docache-go
+        image: sebastianmontero/hypha-doc-cache-go-testnet:51ff2dab2f700571a23e5c1f030b7703242e53e3
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/local/go/bin/go"]
+        args: ["run", "."]
+        ports:
+         - containerPort: 2114
+           name: prometheus
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
+        env:
+          - name: CONTRACT_NAME
+            value: "bm.hypha"
+          - name: DOC_TABLE_NAME
+            value: "documents"
+          - name: EDGE_TABLE_NAME
+            value: "edges"
+          - name: FIREHOSE_ENDPOINT
+            value: "firehose-telos-testnet.dfuse.svc.cluster.local:9000"
+          - name: EOS_ENDPOINT
+            value: "https://testnet.telos.caleos.io"
+          - name: START_BLOCK
+            value: "114966406"
+          - name: DGRAPH_ALPHA_HOST
+            value: "dgraph-testnet-bm.document-cache.svc.cluster.local"
+          - name: DGRAPH_ALPHA_EXTERNAL_PORT
+            value: "9080"
+          - name: PROMETHEUS_PORT
+            value: "2114"
+          - name: HEART_BEAT_FREQUENCY
+            value: "100"
+        envFrom:
+          - secretRef:
+             name: doccache-secrets-testnet-bm
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doccache-go-testnet-bm
+  namespace: document-cache
+  labels:
+    app: doccache-bm
+    env: telos-testnet
+spec:
+  selector:
+    app: doccache-bm
+    env: telos-testnet
+  type: ClusterIP
+  ports:
+  - port: 2114
+    targetPort: 2114
+    protocol: TCP
