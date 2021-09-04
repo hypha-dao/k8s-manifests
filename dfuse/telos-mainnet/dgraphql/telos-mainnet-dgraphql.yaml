@@ -47,7 +47,7 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:80117b5
+        image: dfuse/dfuse-eosio:2807c7e
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/dgraphql.yaml", "-vvvv"]
@@ -97,7 +97,7 @@ spec:
     app: dfuse-dgraphql
     env: telos-mainnet
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: dfuse-telos-mainnet-dgraphql
@@ -114,6 +114,10 @@ spec:
   - host: dgql.tekit.io
     http:
       paths:
-      - backend:
-          serviceName: dfuse-telos-mainnet-dgraphql
-          servicePort: 13023
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dfuse-telos-mainnet-dgraphql
+            port:
+              number: 13023

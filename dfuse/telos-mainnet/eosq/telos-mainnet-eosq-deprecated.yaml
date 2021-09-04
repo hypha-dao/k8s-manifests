@@ -47,7 +47,7 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:2807c7e
+        image: dfuse/dfuse-eosio:80117b5
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/eosq.yaml", "-vvv"]
@@ -90,7 +90,7 @@ spec:
     app: dfuse-eosq
     env: telos-mainnet
 ---
-apiVersion: networking.k8s.io/v1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: dfuse-telos-mainnet-eosq
@@ -108,9 +108,6 @@ spec:
     http:
       paths:
         - path: /
-          pathType: Prefix
           backend:
-            service:
-              name: dfuse-telos-mainnet-eosq
-              port: 
-                number: 13030
+            serviceName: dfuse-telos-mainnet-eosq
+            servicePort: 13030

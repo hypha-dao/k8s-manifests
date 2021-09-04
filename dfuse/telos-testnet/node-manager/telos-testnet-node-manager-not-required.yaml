@@ -35,7 +35,7 @@ data:
     contracts-console = true
     access-control-allow-origin = *
     access-control-allow-headers = *
-    #chain-state-db-size-mb = 65536
+    chain-state-db-size-mb = 65536
     reversible-blocks-db-size-mb = 4096
     p2p-peer-address = test.telos.kitchen:9876
     p2p-peer-address = testnet.telosusa.io:19877
@@ -84,7 +84,7 @@ data:
         node-manager-data-dir: /data
         node-manager-auto-snapshot-modulo: 5000000
         node-manager-snapshot-store-url: gs://telos-testnet/snapshots
-        #node-manager-restore-snapshot-name: 0093995954-059a43b23d6161e2ce66d602fa1d6850699e5c449db128d7cdb455e7f71224e2-snapshot.bin
+        node-manager-restore-snapshot-name: 0122400638-074baf7e8bfa648d29bfe4145722faf359e2a30bd16bbc787addef80334d154b-snapshot.bin
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -128,7 +128,9 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:latest
+        image: dfuse/dfuse-eosio:80117b5
+        # command: ["/bin/sleep"]
+        # args: ["3650d"]
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/node-manager.yaml", "--data-dir", "/data", "-vv"]
         ports:

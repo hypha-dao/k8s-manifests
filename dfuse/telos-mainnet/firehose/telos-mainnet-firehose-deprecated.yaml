@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-testnet-firehose
+  name: telos-mainnet-firehose
   namespace: dfuse
   labels:
     app: dfuse-firehose
-    env: telos-testnet
+    env: telos-mainnet
 data:
   firehose.yaml: |
     start:
@@ -13,39 +13,39 @@ data:
       - firehose
       flags:
         log-to-file: false
-        #common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || account == 'kv.hypha' || account == 'voice.hypha' || account == 'husd.hypha' || account == 'token.seeds' || account == 'escrow.seeds' || receiver == 'escrow.seeds'
-        common-blocks-store-url: gs://telos-testnet/merged
-        common-oneblock-store-url: gs://telos-testnet/one
-        common-blockstream-addr: telos-testnet-relayer.dfuse.svc.cluster.local:13011
-        common-blockmeta-addr: telos-testnet-blockmeta.dfuse.svc.cluster.local:13014
+        common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || account == 'kv.hypha' || account == 'voice.hypha' || account == 'husd.hypha' || account == 'token.seeds' || account == 'escrow.seeds' || receiver == 'escrow.seeds'
+        common-blocks-store-url: gs://telos-mainnet/merged
+        common-oneblock-store-url: gs://telos-mainnet/one-v2
+        common-blockstream-addr: telos-mainnet-relayer.dfuse.svc.cluster.local:13011
+        common-blockmeta-addr: telos-mainnet-blockmeta.dfuse.svc.cluster.local:13014
         firehose-grpc-listen-addr: ":9000*"
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: telos-testnet-firehose
+  name: telos-mainnet-firehose
   namespace: dfuse
   labels:
     app: dfuse-firehose
-    env: telos-testnet
+    env: telos-mainnet
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: dfuse-firehose
-      env: telos-testnet
+      env: telos-mainnet
   template:
     metadata:
       namespace: dfuse
       labels:
         app: dfuse-firehose
-        env: telos-testnet
+        env: telos-mainnet
     spec:
       serviceAccountName: dfuse-service-account
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:2807c7e
+        image: dfuse/dfuse-eosio:80117b5
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/firehose.yaml","-d","run/firehose","-vv"]
@@ -54,16 +54,16 @@ spec:
           name: grpc
           protocol: TCP
         volumeMounts:
-        - name: telos-testnet-firehose
+        - name: telos-mainnet-firehose
           mountPath: /config/firehose.yaml
           subPath: firehose.yaml
         - name: dfuse-service-account-token-jsp6h
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
-      - name: telos-testnet-firehose
+      - name: telos-mainnet-firehose
         configMap:
-          name: telos-testnet-firehose
+          name: telos-mainnet-firehose
       - name: dfuse-service-account-token-jsp6h
         secret:
           secretName: dfuse-service-account-token-jsp6h
@@ -74,11 +74,11 @@ kind: Service
 metadata:
   annotations:
     service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
-  name: firehose-telos-testnet
+  name: firehose-telos-mainnet
   namespace: dfuse
   labels:
     app: dfuse-firehose
-    env: telos-testnet
+    env: telos-mainnet
 spec:
   type: ClusterIP
   ports:
@@ -88,12 +88,12 @@ spec:
     protocol: TCP
   selector:
     app: dfuse-firehose
-    env: telos-testnet
+    env: telos-mainnet
 # ---
 # apiVersion: networking.k8s.io/v1beta1
 # kind: Ingress
 # metadata:
-#   name: telos-testnet-firehose
+#   name: telos-mainnet-firehose
 #   namespace: dfuse
 #   annotations:
 #     kubernetes.io/ingress.class: nginx
@@ -111,5 +111,5 @@ spec:
 #     http:
 #       paths:
 #       - backend:
-#           serviceName: firehose-telos-testnet
+#           serviceName: firehose-telos-mainnet
 #           servicePort: grpc

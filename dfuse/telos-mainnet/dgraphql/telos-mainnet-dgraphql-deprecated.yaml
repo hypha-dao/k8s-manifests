@@ -1,71 +1,74 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-mainnet-eosq
+  name: telos-mainnet-dgraphql
   namespace: dfuse
   labels:
-    app: dfuse-eosq
+    app: dfuse-dgraphql
     env: telos-mainnet
 data:
-  eosq.yaml: |
+  dgraphql.yaml: |
     start:
       args:
-      - eosq
+      - dgraphql
       flags:
         log-to-file: false
         #log-format: stackdriver
-        common-chain-core-symbol: "4,TLOS"
-        eosq-api-endpoint-url: "https://dfuse.tekit.io"
-        eosq-available-networks: "[{ \"id\": \"local\", \"is_test\": true, \"logo\": \"/images/eos-mainnet.png\", \"name\": \"Local Network\", \"url\": \"https://dfuse.tekit.io\" }]"
-        eosq-default-network: local
-        eosq-display-price: true
-        eosq-price-ticker-name: TLOS
-        eosq-environment: production
+        common-blockmeta-addr: telos-mainnet-blockmeta.dfuse.svc.cluster.local:13014
+        common-search-addr: dfuse-telos-mainnet-router.dfuse.svc.cluster.local:13018
+        common-system-shutdown-signal-delay: 30s
+        common-trxdb-dsn: tikv://basic-pd.default.svc:2379/trxdb?prefix=namespace_prefix
+        dgraphql-disable-authentication: true
+        dgraphql-override-trace-id: false
+        dgraphql-protocol: EOS
 --- 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: telos-mainnet-eosq
+  name: telos-mainnet-dgraphql
   namespace: dfuse
   labels:
-    app: dfuse-eosq
+    app: dfuse-dgraphql
     env: telos-mainnet
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dfuse-eosq
+      app: dfuse-dgraphql
       env: telos-mainnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse-eosq
+        app: dfuse-dgraphql
         env: telos-mainnet
     spec:
       serviceAccountName: dfuse-service-account
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:2807c7e
+        image: dfuse/dfuse-eosio:80117b5
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/eosq.yaml", "-vvv"]
+        args: ["start", "-c", "/config/dgraphql.yaml", "-vvvv"]
         ports:
-        - containerPort: 13030
+        - containerPort: 13023
           name: http
           protocol: TCP
+        - containerPort: 13024
+          name: grpc
+          protocol: TCP
         volumeMounts:
-        - name: telos-mainnet-eosq
-          mountPath: /config/eosq.yaml
-          subPath: eosq.yaml
+        - name: telos-mainnet-dgraphql
+          mountPath: /config/dgraphql.yaml
+          subPath: dgraphql.yaml
         - name: dfuse-service-account-token-jsp6h
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
-      - name: telos-mainnet-eosq
+      - name: telos-mainnet-dgraphql
         configMap:
-          name: telos-mainnet-eosq
+          name: telos-mainnet-dgraphql
       - name: dfuse-service-account-token-jsp6h
         secret:
           secretName: dfuse-service-account-token-jsp6h
@@ -74,26 +77,30 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dfuse-telos-mainnet-eosq
+  name: dfuse-telos-mainnet-dgraphql
   namespace: dfuse
   labels:
-    app: dfuse-eosq
+    app: dfuse-dgraphql
     env: telos-mainnet
 spec:
   type: ClusterIP
   ports:
   - name: http
-    port: 13030
-    targetPort: 13030
+    port: 13023
+    targetPort: 13023
+    protocol: TCP
+  - name: grpc
+    port: 13024
+    targetPort: 13024
     protocol: TCP
   selector:
-    app: dfuse-eosq
+    app: dfuse-dgraphql
     env: telos-mainnet
 ---
-apiVersion: networking.k8s.io/v1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: dfuse-telos-mainnet-eosq
+  name: dfuse-telos-mainnet-dgraphql
   namespace: dfuse
   annotations:
     kubernetes.io/ingress.class: "nginx"    
@@ -101,16 +108,12 @@ metadata:
 spec:
   tls:
   - hosts:
-    - deosq.tekit.io
-    secretName: deosq-tekit-io
+    - dgql.tekit.io
+    secretName: dgql-tekit-io
   rules:
-  - host: deosq.tekit.io
+  - host: dgql.tekit.io
     http:
       paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: dfuse-telos-mainnet-eosq
-              port: 
-                number: 13030
+      - backend:
+          serviceName: dfuse-telos-mainnet-dgraphql
+          servicePort: 13023

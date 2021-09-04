@@ -1,45 +1,51 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-mainnet-trxdb-loader-config
+  name: telos-mainnet-indexer-5000-v2
   namespace: dfuse
   labels:
-    app: dfuse-trxdb-loader
+    app: dfuse-indexer-5000
     env: telos-mainnet
 data:
-  trxdb-loader.yaml: |
+  indexer.yaml: |
     start:
       args:
-      - trxdb-loader
+      - search-indexer
       flags:
         log-to-file: false
         common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
         common-include-filter-expr: account == 'dao.hypha' || receiver == 'dao.hypha' || account == 'bank.hypha' || receiver == 'bank.hypha' || account == 'token.hypha' || receiver == 'token.hypha' || account == 'msig.hypha' || receiver == 'msig.hypha' || account == 'eosio.msig' || receiver == 'eosio.msig' || account == 'kv.hypha' || receiver == 'kv.hypha' || account == 'voice.hypha' || receiver == 'voice.hypha' || account == 'husd.hypha' || receiver == 'husd.hypha' || account == 'escrow.seeds' || receiver == 'escrow.seeds' || account == 'accts.seeds' || receiver == 'accts.seeds' || account == 'harvst.seeds' || receiver == 'harvst.seeds' || account == 'settgs.seeds' || receiver == 'settgs.seeds' || account == 'funds.seeds' || receiver == 'funds.seeds' || account == 'invite.seeds' || receiver == 'invite.seeds' || account == 'join.seeds' || receiver == 'join.seeds' || account == 'rules.seeds' || receiver == 'rules.seeds' || account == 'histry.seeds' || receiver == 'histry.seeds' || account == 'policy.seeds' || receiver == 'policy.seeds' || account == 'token.seeds' || receiver == 'token.seeds' || account == 'free.seeds' || receiver == 'free.seeds' || account == 'gifts.seeds' || receiver == 'gifts.seeds' || account == 'milest.seeds' || receiver == 'milest.seeds' || account == 'hypha.seeds' || receiver == 'hypha.seeds' || account == 'allies.seeds' || receiver == 'allies.seeds' || account == 'refer.seeds' || receiver == 'refer.seeds' || account == 'bank.seeds' || receiver == 'bank.seeds' || account == 'system.seeds' || receiver == 'system.seeds'
+        common-blocks-store-url: gs://telos-mainnet/merged
+        common-oneblock-store-url: gs://telos-mainnet/one-v2
         common-blockstream-addr: telos-mainnet-relayer.dfuse.svc.cluster.local:13011
         common-blockmeta-addr: telos-mainnet-blockmeta.dfuse.svc.cluster.local:13014
-        common-trxdb-dsn: tikv://basic-pd.default.svc:2379/trxdb?prefix=namespace_prefix
-        common-blocks-store-url: gs://telos-mainnet/merged
-        common-chain-id: 4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11
+        search-common-indices-store-url: gs://telos-mainnet/indices
+        #search-indexer-enable-batch-mode: true
+        search-indexer-shard-size: 5000
+        #search-indexer-start-block: 149885000
+        #search-indexer-stop-block: 146600000
+        search-indexer-writable-path: /dfuse-data/search/indexer
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: telos-mainnet-trxdb-loader
+  name: telos-mainnet-indexer-5000-v2
   namespace: dfuse
   labels:
-    app: dfuse-trxdb-loader
+    app: dfuse-indexer-5000
     env: telos-mainnet
 spec:
   replicas: 1
+  serviceName: telos-mainnet-indexer-5000-v2
   selector:
     matchLabels:
-      app: dfuse-trxdb-loader
+      app: dfuse-indexer-5000
       env: telos-mainnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse-trxdb-loader
+        app: dfuse-indexer-5000
         env: telos-mainnet
     spec:
       serviceAccountName: dfuse-service-account
@@ -49,40 +55,62 @@ spec:
         image: dfuse/dfuse-eosio:2807c7e
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/trxdb-loader.yaml", "--data-dir", "/data", "-v"]
+        args: ["start", "-c", "/config/indexer.yaml","-v"]
         ports:
-          - containerPort: 13020
+          - containerPort: 13021
+            name: grpc
+          - containerPort: 13022
             name: http
         volumeMounts:
-        - name: telos-mainnet-trxdb-loader-config
-          mountPath: /config/trxdb-loader.yaml
-          subPath: trxdb-loader.yaml
+        - name: telos-mainnet-indexer-5000-pvc-v2
+          mountPath: /dfuse-data
+        - name: telos-mainnet-indexer-5000-v2
+          mountPath: /config/indexer.yaml
+          subPath: indexer.yaml
         - name: dfuse-service-account-token-jsp6h
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
-      - name: telos-mainnet-trxdb-loader-config
+      - name: telos-mainnet-indexer-5000-v2
         configMap:
-          name: telos-mainnet-trxdb-loader-config
+          name: telos-mainnet-indexer-5000-v2
       - name: dfuse-service-account-token-jsp6h
         secret:
           secretName: dfuse-service-account-token-jsp6h
           defaultMode: 420
+  volumeClaimTemplates:
+    - metadata:
+        name: telos-mainnet-indexer-5000-pvc-v2
+        namespace: dfuse
+        labels:
+          app: dfuse-indexer-5000
+          env: telos-mainnet
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 15Gi
+        storageClassName: standard
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: dfuse-telos-mainnet-trxdb-loader
+  name: telos-mainnet-indexer-5000-v2
   namespace: dfuse
   labels:
-    app: dfuse-trxdb-loader
+    app: dfuse-indexer-5000
     env: telos-mainnet
 spec:
   ports:
-  - port: 13020
-    targetPort: 13020
+  - port: 13021
+    targetPort: 13021
+    protocol: TCP
+    name: grpc
+  - port: 13022
+    targetPort: 13022
     protocol: TCP
     name: http
   selector:
-    app: dfuse-trxdb-loader
+    app: dfuse-indexer-5000
     env: telos-mainnet

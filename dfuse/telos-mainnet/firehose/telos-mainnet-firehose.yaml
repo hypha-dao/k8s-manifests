@@ -45,7 +45,7 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:80117b5
+        image: dfuse/dfuse-eosio:2807c7e
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/firehose.yaml","-d","run/firehose","-vv"]
@@ -89,27 +89,4 @@ spec:
   selector:
     app: dfuse-firehose
     env: telos-mainnet
-# ---
-# apiVersion: networking.k8s.io/v1beta1
-# kind: Ingress
-# metadata:
-#   name: telos-mainnet-firehose
-#   namespace: dfuse
-#   annotations:
-#     kubernetes.io/ingress.class: nginx
-#     cert-manager.io/cluster-issuer: letsencrypt-prod
-#     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
-#     # nginx.ingress.kubernetes.io/ssl-redirect: "true"
-#     # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-# spec:
-#   tls: 
-#   - hosts:
-#     - fh-test.tekit.io
-#     secretName: fh-test-tekit-tls 
-#   rules:
-#   - host: fh-test.tekit.io
-#     http:
-#       paths:
-#       - backend:
-#           serviceName: firehose-telos-mainnet
-#           servicePort: grpc
+

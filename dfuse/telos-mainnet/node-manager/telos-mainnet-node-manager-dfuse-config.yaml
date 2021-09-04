@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-node-manager-config
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-mainnet
+data:
+  node-manager.yaml: |
+    start:
+      args:
+      - node-manager
+      flags:
+        log-to-file: true
+        common-blocks-store-url: gs://telos-mainnet/merged
+        common-oneblock-store-url: gs://telos-mainnet/one 
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        node-manager-http-listen-addr: :8080
+        node-manager-config-dir: /config
+        node-manager-data-dir: /data
+        node-manager-auto-snapshot-modulo: 5000000
+        node-manager-snapshot-store-url: gs://telos-mainnet/snapshots
+        # node-manager-restore-snapshot-name: 0168295439-0a07fc0f7d91f3fba6050207f2b242b2eb1c679cca0a20fd5e0f0b9eb8439eb2-snapshot.bin

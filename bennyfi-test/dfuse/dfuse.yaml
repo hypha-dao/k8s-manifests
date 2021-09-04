@@ -87,6 +87,7 @@ data:
         mindreader-shutdown-delay: 20s
         merger-max-one-block-operations-batch-size: 50000
         firehose-grpc-listen-addr: ":9000*"
+        blockmeta-eos-api-upstream-addr: :8889
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

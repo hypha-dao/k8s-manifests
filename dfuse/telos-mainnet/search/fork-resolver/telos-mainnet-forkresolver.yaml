@@ -44,7 +44,7 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:80117b5
+        image: dfuse/dfuse-eosio:2807c7e
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/forkresolver.yaml", "-vv"]

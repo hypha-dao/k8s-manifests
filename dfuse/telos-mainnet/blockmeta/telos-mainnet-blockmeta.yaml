@@ -16,7 +16,7 @@ data:
         common-blocks-store-url: gs://telos-mainnet/merged
         common-oneblock-store-url: gs://telos-mainnet/one-v2
         common-blockstream-addr: telos-mainnet-relayer.dfuse.svc.cluster.local:13011
-        blockmeta-eos-api-upstream-addr: mindreader-telos-mainnet-cluster.dfuse.svc.cluster.local:8888
+        blockmeta-eos-api-upstream-addr: telos-mainnet-mindreader-headless-v2.dfuse.svc.cluster.local:8888
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,7 +43,7 @@ spec:
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:80117b5
+        image: dfuse/dfuse-eosio:2807c7e
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/blockmeta.yaml","-vv"]

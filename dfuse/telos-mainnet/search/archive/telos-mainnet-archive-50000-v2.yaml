@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-mainnet-archive-50000-v2
+  namespace: dfuse
+  labels:
+    app: dfuse-archive-50000
+    env: telos-mainnet
+data:
+  archive.yaml: |
+    start:
+      args:
+      - search-archive
+      flags:
+        log-to-file: false
+        # #log-format: stackdriver
+        common-blockmeta-addr: telos-mainnet-blockmeta.dfuse.svc.cluster.local:13014
+        search-common-indices-store-url: gs://telos-mainnet/indices
+        search-common-mesh-dsn: etcd://etcd-cluster-client.dfuse.svc.cluster.local:2379/1
+        search-common-mesh-service-version: v3
+        search-common-mesh-publish-interval: 1s
+        search-archive-tier-level: 10
+        search-archive-shard-size: 50000
+        search-archive-start-block: 0
+        search-archive-stop-block: 145950000
+        search-archive-index-polling: true
+        search-archive-sync-from-storage: true
+        search-archive-sync-max-indexes: 10000000
+        search-archive-writable-path: /dfuse-data/search/archiver
+        search-archive-indices-dl-threads: 20
+        search-archive-max-query-threads: 12
+        search-archive-shutdown-delay: 5s
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: telos-mainnet-archive-50000-v2
+  namespace: dfuse
+  labels:
+    app: dfuse-archive-50000
+    env: telos-mainnet
+spec:
+  replicas: 1
+  serviceName: telos-mainnet-archive-50000-v2
+  selector:
+    matchLabels:
+      app: dfuse-archive-50000
+      env: telos-mainnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse-archive-50000
+        env: telos-mainnet
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio:2807c7e
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/archive.yaml","-vv"]
+        ports:
+          - containerPort: 13015
+            name: grpc
+          - containerPort: 13016
+            name: http
+        volumeMounts:
+        - name: telos-mainnet-archive-50000-pvc-v2
+          mountPath: /dfuse-data
+        - name: telos-mainnet-archive-50000-v2
+          mountPath: /config/archive.yaml
+          subPath: archive.yaml
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+      - name: telos-mainnet-archive-50000-v2
+        configMap:
+          name: telos-mainnet-archive-50000-v2
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420
+  volumeClaimTemplates:
+    - metadata:
+        name: telos-mainnet-archive-50000-pvc-v2
+        namespace: dfuse
+        labels:
+          app: dfuse-archive-50000
+          env: telos-mainnet
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: standard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telos-mainnet-archive-50000-v2
+  namespace: dfuse
+  labels:
+    app: dfuse-archive-50000
+    env: telos-mainnet
+spec:
+  ports:
+  - port: 13015
+    targetPort: 13015
+    protocol: TCP
+    name: grpc
+  - port: 13016
+    targetPort: 13016
+    protocol: TCP
+    name: http
+  selector:
+    app: dfuse-archive-50000
+    env: telos-mainnet

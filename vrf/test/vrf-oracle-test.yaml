@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: vrf-oracle-test
-        image: sebastianmontero/vrf-oracle-test:10d8af5f41daf66efca954a36fc7368545814b1c
+        image: sebastianmontero/vrf-oracle-test:7d0b28c1dd17f3a1246df7c1ccfe1097c46000f3
         imagePullPolicy: IfNotPresent
         #command: ["ls"]
         command: ["/usr/local/go/bin/go"]

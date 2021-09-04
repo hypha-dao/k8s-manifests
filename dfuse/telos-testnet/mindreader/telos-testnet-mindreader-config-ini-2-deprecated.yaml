@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-testnet-mindreader-config-ini
+  namespace: dfuse
+  labels:
+    app: dfuse
+    env: telos-testnet
+data:
+  config.ini: |
+    plugin = eosio::chain_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::http_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+    plugin = eosio::producer_plugin
+    plugin = eosio::producer_api_plugin
+    max-transaction-time = 5000
+    chain-state-db-size-mb = 65536
+    read-mode = head
+    p2p-accept-transactions = false
+    api-accept-transactions = false
+    agent-name = telos-kitchen-dfuse-mindreader
+    p2p-server-address = 127.0.0.1:9876
+    p2p-listen-endpoint = 127.0.0.1:9876
+    p2p-max-nodes-per-host = 100
+    connection-cleanup-period = 60
+    access-control-allow-origin = *
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+    wasm-runtime = eos-vm-jit
+    eos-vm-oc-enable = true
+    eos-vm-oc-compile-threads = 4
+    deep-mind = true
+    contracts-console = true
+    p2p-peer-address=node1.testnet.telosglobal.io:9876
+    p2p-peer-address=basho.eos.barcelona:9899
+    p2p-peer-address=sslapi.teloscentral.com:9875
+    p2p-peer-address=testnet.telos.eclipse24.io:6789
+    p2p-peer-address=testnet2.telos.eosdetroit.io:1337
+    p2p-peer-address=basho-p2p.telosuk.io:19876
+    p2p-peer-address=telos-testnet.atticlab.net:7876
+    p2p-peer-address=testnet.eossweden.eu:8022
+    p2p-peer-address=p2p-test.tlos.goodblock.io:9876
+    p2p-peer-address=p2p.testnet2.telosgermany.io
+    p2p-peer-address=telos-testnet-b.eosphere.io:9825
+    p2p-peer-address=p2p.testnet.telosgreen.com:9876
+    p2p-peer-address=testnet2p2p.telosarabia.net:9876
+    p2p-peer-address=test.telos.kitchen:9876
+    p2p-peer-address=prod.testnet.bp.teleology.world:9876
+    p2p-peer-address=testnet-b.telos-21zephyr.com:9876
+    p2p-peer-address=p2p.testnet.telosunlimited.io:9876
+    p2p-peer-address=basho.sofos.network:9876
+    p2p-peer-address=p2p.testnet.nytelos.com:8012
+    p2p-peer-address=telos-testnet.cryptolions.io:9871
+    p2p-peer-address=p2p-telos-testnet.hkeos.com:59876
+    p2p-peer-address=t-seed.teloskorea.com:19876

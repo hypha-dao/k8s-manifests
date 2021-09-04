@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-testnet-mindreader-config-ini
+  name: telos-testnet-mindreader-nodeos-config
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-mindreader
     env: telos-testnet
 data:
   config.ini: |
@@ -16,12 +16,14 @@ data:
     plugin = eosio::producer_plugin
     plugin = eosio::producer_api_plugin
     max-transaction-time = 5000
+    chain-state-db-size-mb = 65536
     read-mode = head
     p2p-accept-transactions = false
     api-accept-transactions = false
     agent-name = telos-kitchen-dfuse-mindreader
     p2p-server-address = 127.0.0.1:9876
     p2p-listen-endpoint = 127.0.0.1:9876
+    http-server-address = 0.0.0.0:8888
     p2p-max-nodes-per-host = 100
     connection-cleanup-period = 60
     access-control-allow-origin = *
@@ -33,21 +35,36 @@ data:
     eos-vm-oc-compile-threads = 4
     deep-mind = true
     contracts-console = true
-    p2p-peer-address = testnet.telosusa.io:19877
-    p2p-peer-address = basho-p2p.telosuk.io:19876
-    p2p-peer-address = test.telos.kitchen:9876
-    p2p-peer-address = peer.tlostest.alohaeos.com:9876
-    p2p-peer-address = nickfury.tlos.goodblock.io:9876
-    p2p-peer-address = api.basho.eostribe.io:9880
-    p2p-peer-address = testnet.telos.caleos.io:9880
+    p2p-peer-address=node1.testnet.telosglobal.io:9876
+    p2p-peer-address=basho.eos.barcelona:9899
+    p2p-peer-address=sslapi.teloscentral.com:9875
+    p2p-peer-address=testnet.telos.eclipse24.io:6789
+    p2p-peer-address=testnet2.telos.eosdetroit.io:1337
+    p2p-peer-address=basho-p2p.telosuk.io:19876
+    p2p-peer-address=telos-testnet.atticlab.net:7876
+    p2p-peer-address=testnet.eossweden.eu:8022
+    p2p-peer-address=p2p-test.tlos.goodblock.io:9876
+    p2p-peer-address=p2p.testnet2.telosgermany.io
+    p2p-peer-address=telos-testnet-b.eosphere.io:9825
+    p2p-peer-address=p2p.testnet.telosgreen.com:9876
+    p2p-peer-address=testnet2p2p.telosarabia.net:9876
+    p2p-peer-address=test.telos.kitchen:9876
+    p2p-peer-address=prod.testnet.bp.teleology.world:9876
+    p2p-peer-address=testnet-b.telos-21zephyr.com:9876
+    p2p-peer-address=p2p.testnet.telosunlimited.io:9876
+    p2p-peer-address=basho.sofos.network:9876
+    p2p-peer-address=p2p.testnet.nytelos.com:8012
+    p2p-peer-address=telos-testnet.cryptolions.io:9871
+    p2p-peer-address=p2p-telos-testnet.hkeos.com:59876
+    p2p-peer-address=t-seed.teloskorea.com:19876
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-testnet-mindreader
+  name: telos-testnet-mindreader-dfuse-config
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-mindreader
     env: telos-testnet
 data:
   mindreader.yaml: |
@@ -55,12 +72,14 @@ data:
       args:
       - mindreader
       flags:
-        log-to-file: true
+        # log-format: json
+        log-to-file: false
         common-blocks-store-url: gs://telos-testnet/merged
         common-oneblock-store-url: gs://telos-testnet/one
         common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
         mindreader-manager-api-addr: :8080
         mindreader-nodeos-api-addr: localhost:8888
+        mindreader-connection-watchdog: false
         mindreader-config-dir: /config
         mindreader-readiness-max-latency: 5s
         mindreader-blocks-chan-capacity: 100000
@@ -68,53 +87,41 @@ data:
         mindreader-log-to-zap: true
         mindreader-shutdown-delay: 20s
         mindreader-snapshot-store-url: gs://telos-testnet/snapshots
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mindreader-telos-testnet
-  namespace: dfuse
-  labels:
-    app: dfuse
-    env: telos-testnet
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 50Gi
-  storageClassName: standard
+        # mindreader-restore-snapshot-name: 0126459367-07899de7d06b2920be3830787e916d3f408899d3a07c5a67e85a4a1db23aa68a-snapshot.bin
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: dfuse-telos-testnet-mindreader
+  name: telos-testnet-mindreader-statefulset
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-mindreader
     env: telos-testnet
 spec:
   replicas: 1
-  serviceName: mindreader-telos-testnet
+  serviceName: telos-testnet-mindreader-headless
   selector:
     matchLabels:
-      app: dfuse
+      app: dfuse-mindreader
       env: telos-testnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse
+        app: dfuse-mindreader
         env: telos-testnet
     spec:
       serviceAccountName: dfuse-service-account
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:80117b5
+        image: dfuse/dfuse-eosio:2807c7e
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
         args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vv"]
+        # env:
+        #   - name: INFO
+        #     value: ".*"
         ports:
         - containerPort: 13010
           name: grpc
@@ -132,76 +139,55 @@ spec:
           name: mon2
           protocol: TCP
         volumeMounts:
-        - name: mindreader-telos-testnet
+        - name: telos-testnet-mindreader-pvc
           mountPath: /data
-        - name: telos-testnet-mindreader
+        - name: telos-testnet-mindreader-dfuse-config
           mountPath: /config/mindreader.yaml
           subPath: mindreader.yaml
-        - name: dfuse-mindreader-config-ini-testnet
+        - name: telos-testnet-mindreader-nodeos-config
           mountPath: /config/config.ini
           subPath: config.ini
         - name: dfuse-service-account-token-jsp6h
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
-      - name: mindreader-telos-testnet
-        persistentVolumeClaim:
-          claimName: mindreader-telos-testnet
-      - name: telos-testnet-mindreader
+      - name: telos-testnet-mindreader-dfuse-config
         configMap:
-          name: telos-testnet-mindreader
-      - name: dfuse-mindreader-config-ini-testnet
+          name: telos-testnet-mindreader-dfuse-config
+      - name: telos-testnet-mindreader-nodeos-config
         configMap:
-          name: telos-testnet-mindreader-config-ini
+          name: telos-testnet-mindreader-nodeos-config
       - name: dfuse-service-account-token-jsp6h
         secret:
           secretName: dfuse-service-account-token-jsp6h
           defaultMode: 420
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mindreader-telos-testnet
-  namespace: dfuse
-  labels:
-    app: dfuse
-    env: telos-testnet
-spec:
-  type: NodePort
-  ports:
-  - port: 8888
-    targetPort: 8888
-    protocol: TCP
-    name: nodeos-api
-  - port: 8080
-    targetPort: 8080
-    protocol: TCP
-    name: mindrdr-mgr
-  - port: 9000
-    targetPort: 9000
-    protocol: TCP
-    name: mon1
-  - port: 9102
-    targetPort: 9102
-    protocol: TCP
-    name: mon2
-  selector:
-    app: dfuse
-    env: telos-testnet
-
+  volumeClaimTemplates:
+  - metadata:
+      name: telos-testnet-mindreader-pvc
+      namespace: dfuse
+      labels:
+        app: dfuse-mindreader
+        env: telos-testnet
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: standard
 ---
 apiVersion: v1
 kind: Service
 metadata:
   annotations:
     service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
-  name: mindreader-telos-testnet-cluster
+  name: telos-testnet-mindreader-headless
   namespace: dfuse
   labels:
-    app: dfuse
+    app: dfuse-mindreader
     env: telos-testnet
 spec:
-  type: ClusterIP
+  clusterIP: None
   ports:
   - name: grpc
     port: 13010
@@ -212,5 +198,5 @@ spec:
     targetPort: 8888
     protocol: TCP
   selector:
-    app: dfuse
+    app: dfuse-mindreader
     env: telos-testnet

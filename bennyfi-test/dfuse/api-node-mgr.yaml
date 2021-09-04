@@ -2,22 +2,21 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: bennyfi-test-nodeos-config-ini
+  name: bennyfi-test-api-nodeos-config-ini
   namespace: bennyfi-test
   labels:
-    app: bennyfi-test-node-mgr
+    app: bennyfi-test-api-node-mgr
     env: local
 data:
   config.ini: |
     plugin = eosio::http_plugin
     plugin = eosio::chain_api_plugin
-    plugin = eosio::producer_plugin
-    plugin = eosio::producer_api_plugin
     plugin = eosio::db_size_api_plugin
     plugin = eosio::net_api_plugin
 
     contracts-console = true
     enable-account-queries = true
+
     abi-serializer-max-time-ms = 30000
 
     # HTTP
@@ -34,17 +33,16 @@ data:
     p2p-max-nodes-per-host = 2
     connection-cleanup-period = 60
 
-    producer-name = eosio
-    enable-stale-production = true
+    p2p-peer-address=bennyfi-test-node-mgr-cluster.bennyfi-test.svc.cluster.local:9877
 
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: bennyfi-test-node-mgr-config
+  name: bennyfi-test-api-node-mgr-config
   namespace: bennyfi-test
   labels:
-    app: bennyfi-test-node-mgr
+    app: bennyfi-test-api-node-mgr
     env: local
 data:
   node-mgr.yaml: |
@@ -61,10 +59,10 @@ data:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: bennyfi-test-node-mgr
+  name: bennyfi-test-api-node-mgr
   namespace: bennyfi-test
   labels:
-    app: bennyfi-test-node-mgr
+    app: bennyfi-test-api-node-mgr
     env: local
 spec:
   accessModes:
@@ -77,23 +75,23 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: bennyfi-test-node-mgr
+  name: bennyfi-test-api-node-mgr
   namespace: bennyfi-test
   labels:
-    app: bennyfi-test-node-mgr
+    app: bennyfi-test-api-node-mgr
     env: local
 spec:
   replicas: 1
   serviceName: bennyfi-test-dfuse-service
   selector:
     matchLabels:
-      app: bennyfi-test-node-mgr
+      app: bennyfi-test-api-node-mgr
       env: local
   template:
     metadata:
       namespace: bennyfi-test
       labels:
-        app: bennyfi-test-node-mgr
+        app: bennyfi-test-api-node-mgr
         env: local
     spec:
       # serviceAccountName: dfuse-service-account
@@ -112,12 +110,12 @@ spec:
           name: p2p
           protocol: TCP
         volumeMounts:
-        - name: bennyfi-test-node-mgr
+        - name: bennyfi-test-api-node-mgr
           mountPath: /dfuse-data
-        - name: bennyfi-test-node-mgr-config
+        - name: bennyfi-test-api-node-mgr-config
           mountPath: /config/node-mgr.yaml
           subPath: node-mgr.yaml
-        - name: bennyfi-test-nodeos-config-ini
+        - name: bennyfi-test-api-nodeos-config-ini
           mountPath: /config/producer/config.ini
           subPath: config.ini
         - name: bennyfi-nodeos-test-genesis
@@ -127,15 +125,15 @@ spec:
         #   readOnly: true
         #   mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
-      - name: bennyfi-test-node-mgr
+      - name: bennyfi-test-api-node-mgr
         persistentVolumeClaim:
-          claimName: bennyfi-test-node-mgr
-      - name: bennyfi-test-node-mgr-config
+          claimName: bennyfi-test-api-node-mgr
+      - name: bennyfi-test-api-node-mgr-config
         configMap:
-          name: bennyfi-test-node-mgr-config
-      - name: bennyfi-test-nodeos-config-ini
+          name: bennyfi-test-api-node-mgr-config
+      - name: bennyfi-test-api-nodeos-config-ini
         configMap:
-          name: bennyfi-test-nodeos-config-ini
+          name: bennyfi-test-api-nodeos-config-ini
       - name: bennyfi-nodeos-test-genesis
         configMap:
           name: bennyfi-test-genesis
@@ -147,10 +145,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: bennyfi-test-node-mgr
+  name: bennyfi-test-api-node-mgr
   namespace: bennyfi-test
   labels:
-    app: bennyfi-test-node-mgr
+    app: bennyfi-test-api-node-mgr
     env: local
 spec:
   type: NodePort
@@ -161,7 +159,7 @@ spec:
     protocol: TCP
     name: nodeos-api
   selector:
-    app: bennyfi-test-node-mgr
+    app: bennyfi-test-api-node-mgr
     env: local
 
 ---
@@ -170,10 +168,10 @@ kind: Service
 metadata:
   # annotations:
   #   service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
-  name: bennyfi-test-node-mgr-cluster
+  name: bennyfi-test-api-node-mgr-cluster
   namespace: bennyfi-test
   labels:
-    app: bennyfi-test-node-mgr
+    app: bennyfi-test-api-node-mgr
     env: local
 spec:
   type: ClusterIP
@@ -187,5 +185,5 @@ spec:
     protocol: TCP
     name: p2p
   selector:
-    app: bennyfi-test-node-mgr
+    app: bennyfi-test-api-node-mgr
     env: local

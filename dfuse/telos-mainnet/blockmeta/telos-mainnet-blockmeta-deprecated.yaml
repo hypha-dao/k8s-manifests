@@ -1,68 +1,67 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telos-mainnet-relayer
+  name: telos-mainnet-blockmeta
   namespace: dfuse
   labels:
-    app: dfuse-relayer
+    app: dfuse-blockmeta
     env: telos-mainnet
 data:
-  relayer.yaml: |
+  blockmeta.yaml: |
     start:
       args:
-      - relayer
+      - blockmeta
       flags:
         log-to-file: false
         common-blocks-store-url: gs://telos-mainnet/merged
         common-oneblock-store-url: gs://telos-mainnet/one-v2
-        common-blockmeta-addr: telos-mainnet-blockmeta.dfuse.svc.cluster.local:13014
-        relayer-source: telos-mainnet-mindreader-statefulset-v2-0.telos-mainnet-mindreader-headless-v2.dfuse.svc.cluster.local:13010,telos-mainnet-mindreader-statefulset-v2-1.telos-mainnet-mindreader-headless-v2.dfuse.svc.cluster.local:13010
-        relayer-merger-addr: dfuse-telos-mainnet-merger.dfuse.svc.cluster.local:13012
+        common-blockstream-addr: telos-mainnet-relayer.dfuse.svc.cluster.local:13011
+        blockmeta-eos-api-upstream-addr: mindreader-telos-mainnet-cluster.dfuse.svc.cluster.local:8888
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: telos-mainnet-relayer
+  name: telos-mainnet-blockmeta
   namespace: dfuse
   labels:
-    app: dfuse-relayer
+    app: dfuse-blockmeta
     env: telos-mainnet
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dfuse-relayer
+      app: dfuse-blockmeta
       env: telos-mainnet
   template:
     metadata:
       namespace: dfuse
       labels:
-        app: dfuse-relayer
+        app: dfuse-blockmeta
         env: telos-mainnet
     spec:
       serviceAccountName: dfuse-service-account
       serviceAccount: dfuse/dfuse-service-account
       containers:
       - name: dfuse-eosio
-        image: dfuse/dfuse-eosio:2807c7e
+        image: dfuse/dfuse-eosio:80117b5
         imagePullPolicy: IfNotPresent
         command: ["/app/dfuseeos"]
-        args: ["start", "-c", "/config/relayer.yaml","-vv"]
+        args: ["start", "-c", "/config/blockmeta.yaml","-vv"]
         ports:
-        - containerPort: 13011
+        - containerPort: 13014
           name: grpc
           protocol: TCP
         volumeMounts:
-        - name: telos-mainnet-relayer
-          mountPath: /config/relayer.yaml
-          subPath: relayer.yaml
+        - name: telos-mainnet-blockmeta
+          mountPath: /config/blockmeta.yaml
+          subPath: blockmeta.yaml
         - name: dfuse-service-account-token-jsp6h
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
-      - name: telos-mainnet-relayer
+      - name: telos-mainnet-blockmeta
         configMap:
-          name: telos-mainnet-relayer
+          name: telos-mainnet-blockmeta
       - name: dfuse-service-account-token-jsp6h
         secret:
           secretName: dfuse-service-account-token-jsp6h
@@ -73,18 +72,18 @@ kind: Service
 metadata:
   annotations:
     service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
-  name: telos-mainnet-relayer
+  name: telos-mainnet-blockmeta
   namespace: dfuse
   labels:
-    app: dfuse-relayer
+    app: dfuse-blockmeta
     env: telos-mainnet
 spec:
   type: ClusterIP
   ports:
   - name: grpc
-    port: 13011
-    targetPort: 13011    
+    port: 13014
+    targetPort: 13014    
     protocol: TCP
   selector:
-    app: dfuse-relayer
+    app: dfuse-blockmeta
     env: telos-mainnet

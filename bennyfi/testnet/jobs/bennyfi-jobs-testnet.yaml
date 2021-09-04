@@ -20,11 +20,11 @@ spec:
     spec:
       containers:
       - name: bennyfi-jobs
-        image: sebastianmontero/bennyfi-jobs:v0.4
+        image: sebastianmontero/bennyfi-jobs:v0.7
         imagePullPolicy: IfNotPresent
         env:
           - name: CONTRACT_NAME
-            value: "bennyfitest5"
+            value: "bennyfitestg"
           - name: EOS_ENDPOINT
             value: "https://testnet.telos.caleos.io"
           - name: RUN_INTERVAL_MINS

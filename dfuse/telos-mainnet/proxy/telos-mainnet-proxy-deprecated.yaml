@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: dfuse-telos-mainnet-proxy
@@ -20,24 +20,18 @@ spec:
       - path: /dfuse.eosio.v1.GraphQL/
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-dgraphql
-            port:
-              number: 13024
+          serviceName: dfuse-telos-mainnet-dgraphql
+          servicePort: 13024
       - path: /dfuse.graphql.v1.GraphQL/
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-dgraphql
-            port: 
-              number: 13024
+          serviceName: dfuse-telos-mainnet-dgraphql
+          servicePort: 13024
       - path: /grpc.reflection.v1alpha.ServerReflection/
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-dgraphql
-            port: 
-              number: 13024
+          serviceName: dfuse-telos-mainnet-dgraphql
+          servicePort: 13024
       # - path: /graphiql
       #   pathType: Prefix
       #   backend:
@@ -46,49 +40,35 @@ spec:
       - path: /graphiql/
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-dgraphql
-            port:
-              number: 13023
+          serviceName: dfuse-telos-mainnet-dgraphql
+          servicePort: 13023
       - path: /graphql
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-dgraphql
-            port:
-              number: 13023
+          serviceName: dfuse-telos-mainnet-dgraphql
+          servicePort: 13023
       - path: /v1/chain/
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-eosws
-            port:
-              number: 13026
+          serviceName: dfuse-telos-mainnet-eosws
+          servicePort: 13026
       - path: /v1/stream
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-eosws
-            port:
-              number: 13026
+          serviceName: dfuse-telos-mainnet-eosws
+          servicePort: 13026
       - path: /v0/
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-eosws
-            port:
-              number: 13026
+          serviceName: dfuse-telos-mainnet-eosws
+          servicePort: 13026
       - path: /v1/
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-eosws
-            port:
-              number: 13026
+          serviceName: dfuse-telos-mainnet-eosws
+          servicePort: 13026
       - path: /
         pathType: Prefix
         backend:
-          service:
-            name: dfuse-telos-mainnet-eosws
-            port:
-              number: 13026
+          serviceName: dfuse-telos-mainnet-eosws
+          servicePort: 13026

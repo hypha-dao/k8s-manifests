@@ -1,3 +1,9 @@
+
+# To increase volume size:
+# 1. Set the storage value on this file to the desired value and apply changes.
+# 2. Edit the each of the pvcs: kubectl patch pvc tikv-basic-tikv-1 -p '{"spec":{"resources":{"requests":{"storage":"900Gi"}}}}}'
+# 3. Restart pods (delete each of the tikv pods)
+
 apiVersion: tikv.org/v1alpha1
 kind: TikvCluster
 metadata:
@@ -31,7 +37,7 @@ spec:
     baseImage: pingcap/tikv
     replicas: 3
     requests:
-      storage: "250Gi"
+      storage: "900Gi"
     annotations:
       tidb.pingcap.com/sysctl-init: "true"
     # podSecurityContext:
@@ -46,4 +52,3 @@ spec:
       key: dedicated
       operator: Equal
       value: tikv
-  
