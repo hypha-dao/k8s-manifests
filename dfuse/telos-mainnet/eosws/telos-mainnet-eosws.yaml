@@ -21,7 +21,7 @@ data:
         common-search-addr: dfuse-telos-mainnet-router.dfuse.svc.cluster.local:13018
         common-system-shutdown-signal-delay: 30s
         common-trxdb-dsn: tikv://basic-pd.default.svc:2379/trxdb?prefix=namespace_prefix
-        eosws-nodeos-rpc-addr: telos.caleos.io:443
+        eosws-nodeos-rpc-addr: https://telos.caleos.io:443
 --- 
 apiVersion: apps/v1
 kind: Deployment

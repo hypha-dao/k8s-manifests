@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: telos-testnet-firehose
+  namespace: dfuse
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPCS"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      grpc_next_upstream error timeout http_502 http_503 http_504 non_idempotent;
+      grpc_next_upstream_tries 3;
+spec:
+  tls:
+  - hosts:
+    - fh.tekit.io
+    secretName: fh-tekit-io
+  rules:
+  - host: fh.tekit.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: firehose-telos-testnet
+            port:
+              number: 9000

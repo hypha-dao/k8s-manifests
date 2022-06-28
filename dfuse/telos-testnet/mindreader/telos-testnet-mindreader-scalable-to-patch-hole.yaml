@@ -1,0 +1,202 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-testnet-mindreader-nodeos-config-patch-hole
+  namespace: dfuse
+  labels:
+    app: dfuse-mindreader-patch-hole
+    env: telos-testnet
+data:
+  config.ini: |
+    plugin = eosio::chain_plugin
+    plugin = eosio::chain_api_plugin
+    plugin = eosio::http_plugin
+    plugin = eosio::db_size_api_plugin
+    plugin = eosio::net_api_plugin
+    plugin = eosio::producer_plugin
+    plugin = eosio::producer_api_plugin
+    max-transaction-time = 5000
+    chain-state-db-size-mb = 65536
+    read-mode = head
+    p2p-accept-transactions = false
+    api-accept-transactions = false
+    agent-name = telos-kitchen-dfuse-mindreader
+    p2p-server-address = 127.0.0.1:9876
+    p2p-listen-endpoint = 127.0.0.1:9876
+    http-server-address = 0.0.0.0:8888
+    p2p-max-nodes-per-host = 100
+    connection-cleanup-period = 60
+    access-control-allow-origin = *
+    http-max-response-time-ms = 1000
+    http-validate-host = false
+    verbose-http-errors = true
+    wasm-runtime = eos-vm-jit
+    eos-vm-oc-enable = true
+    eos-vm-oc-compile-threads = 4
+    deep-mind = true
+    contracts-console = true
+    p2p-peer-address=node1.testnet.telosglobal.io:9876
+    p2p-peer-address=basho.eos.barcelona:9899
+    p2p-peer-address=sslapi.teloscentral.com:9875
+    p2p-peer-address=testnet.telos.eclipse24.io:6789
+    p2p-peer-address=testnet2.telos.eosdetroit.io:1337
+    p2p-peer-address=basho-p2p.telosuk.io:19876
+    p2p-peer-address=telos-testnet.atticlab.net:7876
+    p2p-peer-address=testnet.eossweden.eu:8022
+    p2p-peer-address=p2p-test.tlos.goodblock.io:9876
+    p2p-peer-address=p2p.testnet2.telosgermany.io
+    p2p-peer-address=telos-testnet-b.eosphere.io:9825
+    p2p-peer-address=p2p.testnet.telosgreen.com:9876
+    p2p-peer-address=testnet2p2p.telosarabia.net:9876
+    p2p-peer-address=test.telos.kitchen:9876
+    p2p-peer-address=prod.testnet.bp.teleology.world:9876
+    p2p-peer-address=testnet-b.telos-21zephyr.com:9876
+    p2p-peer-address=p2p.testnet.telosunlimited.io:9876
+    p2p-peer-address=basho.sofos.network:9876
+    p2p-peer-address=p2p.testnet.nytelos.com:8012
+    p2p-peer-address=telos-testnet.cryptolions.io:9871
+    p2p-peer-address=p2p-telos-testnet.hkeos.com:59876
+    p2p-peer-address=t-seed.teloskorea.com:19876
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telos-testnet-mindreader-dfuse-config-patch-hole
+  namespace: dfuse
+  labels:
+    app: dfuse-mindreader-patch-hole
+    env: telos-testnet
+data:
+  mindreader.yaml: |
+    start:
+      args:
+      - mindreader
+      flags:
+        # log-format: json
+        log-to-file: false
+        common-blocks-store-url: gs://telos-testnet/merged
+        common-oneblock-store-url: gs://telos-testnet/one
+        common-exclude-filter-expr: (account == 'richrichcoin' || receiver == 'richrichcoin' || (account == 'eosio.token' && (data.to == 'richrichcoin' || data.from == 'richrichcoin'))) || (account == 'nebulatpstps' || receiver == 'nebulatpstps' || (account == 'eosio.token' && (data.to == 'nebulatpstps' || data.from == 'nebulatpstps'))) || (account == 'fullblasting' || receiver == 'fullblasting' || (account == 'eosio.token' && (data.to == 'fullblasting' || data.from == 'fullblasting')))
+        mindreader-manager-api-addr: :8080
+        mindreader-nodeos-api-addr: localhost:8888
+        mindreader-connection-watchdog: false
+        mindreader-config-dir: /config
+        mindreader-readiness-max-latency: 5s
+        mindreader-blocks-chan-capacity: 100000
+        mindreader-start-failure-handler: false
+        mindreader-log-to-zap: true
+        mindreader-shutdown-delay: 20s
+        mindreader-snapshot-store-url: gs://telos-testnet/snapshots
+        mindreader-restore-snapshot-name: 0140484577-085f9fe122baf651d09396fd2f94a96d3fa4ea08efdb2e55f5c779f3a0c5fa93-snapshot.bin
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: telos-testnet-mindreader-statefulset-patch-hole
+  namespace: dfuse
+  labels:
+    app: dfuse-mindreader-patch-hole
+    env: telos-testnet
+spec:
+  replicas: 1
+  serviceName: telos-testnet-mindreader-headless-patch-hole
+  selector:
+    matchLabels:
+      app: dfuse-mindreader-patch-hole
+      env: telos-testnet
+  template:
+    metadata:
+      namespace: dfuse
+      labels:
+        app: dfuse-mindreader-patch-hole
+        env: telos-testnet
+    spec:
+      serviceAccountName: dfuse-service-account
+      serviceAccount: dfuse/dfuse-service-account
+      containers:
+      - name: dfuse-eosio
+        image: dfuse/dfuse-eosio:2807c7e
+        imagePullPolicy: IfNotPresent
+        command: ["/app/dfuseeos"]
+        args: ["start", "-c", "/config/mindreader.yaml", "--data-dir", "/data", "-vv"]
+        # env:
+        #   - name: INFO
+        #     value: ".*"
+        ports:
+        - containerPort: 13010
+          name: grpc
+          protocol: TCP
+        - containerPort: 8888
+          name: nodeos-api
+          protocol: TCP
+        - containerPort: 8080
+          name: mindrdr-mgr
+          protocol: TCP
+        - containerPort: 9000
+          name: mon1
+          protocol: TCP
+        - containerPort: 9102
+          name: mon2
+          protocol: TCP
+        volumeMounts:
+        - name: telos-testnet-mindreader-pvc-patch-hole
+          mountPath: /data
+        - name: telos-testnet-mindreader-dfuse-config-patch-hole
+          mountPath: /config/mindreader.yaml
+          subPath: mindreader.yaml
+        - name: telos-testnet-mindreader-nodeos-config-patch-hole
+          mountPath: /config/config.ini
+          subPath: config.ini
+        - name: dfuse-service-account-token-jsp6h
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+      - name: telos-testnet-mindreader-dfuse-config-patch-hole
+        configMap:
+          name: telos-testnet-mindreader-dfuse-config-patch-hole
+      - name: telos-testnet-mindreader-nodeos-config-patch-hole
+        configMap:
+          name: telos-testnet-mindreader-nodeos-config-patch-hole
+      - name: dfuse-service-account-token-jsp6h
+        secret:
+          secretName: dfuse-service-account-token-jsp6h
+          defaultMode: 420
+  volumeClaimTemplates:
+  - metadata:
+      name: telos-testnet-mindreader-pvc-patch-hole
+      namespace: dfuse
+      labels:
+        app: dfuse-mindreader-patch-hole
+        env: telos-testnet
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: standard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.alpha.kubernetes.io/app-protocols: '{"grpc":"HTTP2"}'
+  name: telos-testnet-mindreader-headless-patch-hole
+  namespace: dfuse
+  labels:
+    app: dfuse-mindreader-patch-hole
+    env: telos-testnet
+spec:
+  clusterIP: None
+  ports:
+  - name: grpc
+    port: 13010
+    targetPort: 13010    
+    protocol: TCP
+  - name: nodeos-api
+    port: 8888
+    targetPort: 8888
+    protocol: TCP
+  selector:
+    app: dfuse-mindreader-patch-hole
+    env: telos-testnet
